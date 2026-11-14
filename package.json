@@ -13,6 +13,8 @@
     "test": "vitest run",
     "benchmark:context": "node benchmarks/context-v0.ts",
     "test:stdio": "node packages/node-app/scripts/stdio-e2e.mjs",
+    "preview:install": "node scripts/preview-install.mjs",
+    "test:preview-install": "node scripts/preview-install-smoke.mjs",
     "demo:handoff": "node packages/node-app/scripts/agent-handoff.mjs",
     "demo:llm-handoff": "node packages/node-app/scripts/llm-handoff.mjs",
     "demo:chat-setup": "node packages/node-app/scripts/chat-setup.mjs",

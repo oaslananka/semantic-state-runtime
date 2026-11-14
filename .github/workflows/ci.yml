@@ -45,6 +45,9 @@ jobs:
       - name: Stdio end-to-end smoke test
         run: pnpm test:stdio
 
+      - name: Preview installation and relocated MCP acceptance
+        run: pnpm test:preview-install
+
       - name: Two-agent handoff demo smoke test
         run: pnpm demo:handoff
 
