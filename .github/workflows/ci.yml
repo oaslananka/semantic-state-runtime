@@ -45,6 +45,9 @@ jobs:
       - name: Stdio end-to-end smoke test
         run: pnpm test:stdio
 
+      - name: Two-agent handoff demo smoke test
+        run: pnpm demo:handoff
+
       - name: Context benchmark v0 smoke test
         run: pnpm benchmark:context
 

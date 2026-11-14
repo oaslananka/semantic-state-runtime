@@ -4,6 +4,18 @@ Private engineering lab for a user-owned, protocol-neutral Personal AI Runtime.
 
 The repository is testing the hard infrastructure needed for one person's durable context to remain usable across AI models and agent transports without making any model vendor or source application the canonical owner of that context.
 
+## Runnable two-agent MCP demo
+
+A deterministic local demo shows one MCP agent client reconciling a project decision and a second client retrieving current semantic state after a runtime restart:
+
+```bash
+pnpm install --frozen-lockfile
+pnpm build
+pnpm demo:handoff
+```
+
+This uses synthetic files and SQLite, not actual LLM vendors or cloud sync. See [the demo walkthrough](examples/README.md) for its evidence boundaries.
+
 ## Current architecture
 
 ```text
