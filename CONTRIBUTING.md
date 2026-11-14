@@ -1,8 +1,9 @@
 # Contributing to Semantic State Runtime
 
-This repository is a **developer preview** with no published release or
-open-source license yet. Please review that limitation before reusing code
-or submitting a contribution.
+This repository is an **unreleased developer preview** under the
+[MIT License](LICENSE). Contributions must be compatible with that license;
+do not submit third-party code or content without permission to license it.
+No npm or MCP Registry package has been published yet.
 
 ## Start here
 
