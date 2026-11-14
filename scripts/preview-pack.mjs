@@ -7,18 +7,19 @@ async function collectThirdPartyNotices(metafile) {
   const roots = new Set();
   for (const input of Object.keys(metafile.inputs)) {
     const normalized = input.replaceAll("\\", "/");
-    const match = normalized.match(/^(.*?node_modules\/\.pnpm\/[^/]+\/node_modules\/(?:@[^/]+\/)?[^/]+)/);
+    const match = /^(.*?node_modules\/\.pnpm\/[^/]+\/node_modules\/(?:@[^/]+\/)?[^/]+)/.exec(normalized);
     if (match) roots.add(resolve(repository, match[1]));
   }
-  const notices = [];
-  for (const root of [...roots].sort()) {
-    const data = JSON.parse(await readFile(join(root, "package.json"), "utf8"));
-    const files = await readdir(root);
-    const licenseFile = files.find((name) => /^(?:license|licence|copying)(?:[.-].*)?$/i.test(name));
-    if (!licenseFile) throw new Error("Cannot verify bundled third-party license: " + data.name);
-    notices.push("=== " + data.name + "@" + data.version + " ===\n" +
-      (await readFile(join(root, licenseFile), "utf8")).trim());
-  }
+  const notices = await Promise.all([...roots]
+    .sort((a, b) => a.localeCompare(b, "en"))
+    .map(async (root) => {
+      const data = JSON.parse(await readFile(join(root, "package.json"), "utf8"));
+      const files = await readdir(root);
+      const licenseFile = files.find((name) => /^(?:license|licence|copying)(?:[.-].*)?$/i.test(name));
+      if (!licenseFile) throw new Error("Cannot verify bundled third-party license: " + data.name);
+      return "=== " + data.name + "@" + data.version + " ===\n" +
+        (await readFile(join(root, licenseFile), "utf8")).trim();
+    }));
   if (roots.size === 0) throw new Error("No bundled third-party dependency inventory discovered.");
   return "THIRD-PARTY SOFTWARE LICENSES\n\n" + notices.join("\n\n") + "\n";
 }

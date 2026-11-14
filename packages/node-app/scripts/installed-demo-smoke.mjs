@@ -12,7 +12,7 @@ assert.deepEqual(config.principal.scopes, ["state:read", "context:read"]);
 assert.deepEqual(config.policy.operations, { plan: false, apply: false });
 assert.equal(config.policy.fields.every((grant) => grant.write === false), true);
 
-for (let i = 0; i < 2; i++) {
+async function checkOneSession() {
   const transport = new StdioClientTransport({
     command: process.execPath,
     args: [resolve(cli), resolve(configFile)],
@@ -39,4 +39,6 @@ for (let i = 0; i < 2; i++) {
     await client.close();
   }
 }
+await checkOneSession();
+await checkOneSession();
 console.log("Installed synthetic read-only MCP demo passed two independent sessions.");
