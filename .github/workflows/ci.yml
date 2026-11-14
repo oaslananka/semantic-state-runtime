@@ -51,6 +51,9 @@ jobs:
       - name: Offline two-model MCP orchestration smoke test
         run: pnpm test:llm-handoff
 
+      - name: Clean chat onboarding smoke test
+        run: pnpm test:chat-setup
+
       - name: Context benchmark v0 smoke test
         run: pnpm benchmark:context
 

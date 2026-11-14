@@ -4,6 +4,23 @@ Open engineering lab for a user-owned, protocol-neutral Personal AI Runtime.
 
 The repository is testing the hard infrastructure needed for one person's durable context to remain usable across AI models and agent transports without making any model vendor or source application the canonical owner of that context.
 
+## Try it from a fresh clone
+
+With Node.js 24.12+ and pnpm 12.x, run this no-credential, no-network
+deterministic demo:
+
+```bash
+pnpm install --frozen-lockfile
+pnpm build
+pnpm demo:handoff
+```
+
+For a real chat model without manually writing MCP configuration, run
+`pnpm demo:chat-setup` from the repo root. It prepares a
+disposable synthetic workspace and prints the tested OpenCode v2.3.0
+command (one free NVIDIA Build API key needed for the subsequent model
+request). The generated runtime is read-only. See
+[first-use instructions](examples/README.md#opencode-v2-first-use-local-mcp).
 ## Runnable two-agent MCP demo
 
 A deterministic local demo shows one MCP agent client reconciling a project decision and a second client retrieving current semantic state after a runtime restart:
