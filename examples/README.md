@@ -79,3 +79,45 @@ This demo proves one local chat-app integration with synthetic records.
 It is not a two-app certification, physical cross-device sync,
 production onboarding, or evidence about real personal data.
 For your own data, see `docs/local-node-runtime-v1.md`.
+
+## Second chat client: Goose CLI (verified)
+
+**Goose CLI v1.59.0** was independently tested against the same synthetic,
+read-only SSRL MCP fixture created by `pnpm demo:chat-setup`.
+It called `ssrl__context_compile` exactly once and replied
+`2026-11-20` using the authorized record text; denied fixture
+fields were absent. OpenCode and Goose are **two different chat clients**,
+but both tests used **one NVIDIA API gateway on one Windows machine**.
+
+For reproduction, use the [Goose provider setup]
+(https://goose-docs.ai/docs/getting-started/providers/) and
+[stdio extension configuration]
+(https://goose-docs.ai/docs/getting-started/using-extensions/):
+
+1. Keep Goose's settings in a temporary, isolated `GOOSE_PATH_ROOT`
+   and use the built SSRL CLI plus the generated workspace's `config.json`
+   as the `ssrl` stdio extension. Filter available tools to
+   `context.compile`; disable unrelated built-in platform tools
+   for this read-only acceptance run.
+2. Configure a custom OpenAI-compatible provider named
+   `custom_ssrl_nvidia_free` pointing to
+   `https://integrate.api.nvidia.com/v1/chat/completions`.
+   Its `api_key_env` is `NVIDIA_API_KEY`; **never put
+   the key value in JSON/YAML or a Git commit**.
+3. Use the free-developer model
+   `nvidia/nemotron-3.5-lightning-30b-a3b` and run
+   `goose run --no-session --provider custom_ssrl_nvidia_free`
+   with a prompt asking for Project Atlas's deadline through the SSRL
+   context tool with `budgetTokens 180`. Validate the tool
+   response **and** the final model answer; a tool connection alone is not
+   end-to-end chat acceptance.
+
+If Goose can call the MCP tool but responds `NOT VERIFIED`
+despite a resolved structured result, an **outdated local build** might
+still be returning the old count-only text response. Run `pnpm build`
+and rerun the setup; the setup now fails early when this incompatibility
+is detected. Do not alter the server's authorization to work around it.
+
+This is evidence of local, policy-scoped cross-client compatibility,
+**not** two independent model providers, cross-device synchronization,
+or production data acceptance.

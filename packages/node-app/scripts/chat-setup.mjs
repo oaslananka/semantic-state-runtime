@@ -13,6 +13,26 @@ const prompt =
   "Call ssrl_context_compile with task 'Project Atlas deadline' and budgetTokens 180. " +
   "Answer the authorized current YYYY-MM-DD deadline from the MCP tool result, not a guess.";
 
+export function assertModelVisibleReadback(result) {
+  const records = result.structuredContent?.records ?? [];
+  const status = result.structuredContent?.resolution;
+  if (result.isError === true || status?.status !== "resolved" || status.entityId !== entityId
+      || !records.some((record) => record.entityId === entityId && record.text.includes("2026-11-20"))) {
+    throw new Error("Synthetic context readback was not authorized or resolved.");
+  }
+  const modelText = (result.content ?? [])
+    .filter((part) => part.type === "text")
+    .map((part) => part.text)
+    .join("\n");
+  if (!modelText.includes("2026-11-20")) {
+    throw new Error("The local MCP build omits authorized model-visible context. Run pnpm build and retry.");
+  }
+  if (/PRIVATE-EVIDENCE|REPLICA-ONLY-SECRET/.test(JSON.stringify(result))) {
+    throw new Error("A denied synthetic field appeared in the context readback.");
+  }
+}
+
+
 export async function prepareChatWorkspace() {
   const fixture = await createHandoffFixture();
   const { root, connect, close } = fixture;
@@ -43,6 +63,18 @@ export async function prepareChatWorkspace() {
       write: false,
     }));
     await writeFile(serverConfigPath, JSON.stringify(serverConfig, null, 2) + "\n");
+
+    // Verify that the actual compiled server exposes authorized text to chat models.
+    const preflight = await connect("setup-chat-readback");
+    try {
+      const readback = await preflight.callTool({
+        name: "context.compile",
+        arguments: { task: "Project Atlas deadline", budgetTokens: 180 },
+      });
+      assertModelVisibleReadback(readback);
+    } finally {
+      await preflight.close();
+    }
 
     const opencodeConfig = {
       $schema: "https://opencode.ai/config.json",

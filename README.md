@@ -21,6 +21,8 @@ disposable synthetic workspace and prints the tested OpenCode v2.3.0
 command (one free NVIDIA Build API key needed for the subsequent model
 request). The generated runtime is read-only. See
 [first-use instructions](examples/README.md#opencode-v2-first-use-local-mcp).
+
+The same synthetic, read-only MCP context was also verified in **Goose CLI v1.59.0**; see [the second-client acceptance](examples/README.md#second-chat-client-goose-cli-verified).
 ## Runnable two-agent MCP demo
 
 A deterministic local demo shows one MCP agent client reconciling a project decision and a second client retrieving current semantic state after a runtime restart:
