@@ -1,31 +1,6 @@
-import { spawnSync } from "node:child_process";
-import { copyFile, lstat, mkdir, readFile, writeFile } from "node:fs/promises";
-import { isAbsolute, join, relative, resolve, sep } from "node:path";
-import { fileURLToPath } from "node:url";
-
-const repository = fileURLToPath(new URL("../", import.meta.url));
-
-function within(parent, target) {
-  const rel = relative(parent, target);
-  return rel === "" || (rel !== ".." && !rel.startsWith(".." + sep) && !isAbsolute(rel));
-}
-
-function command(executable, args, cwd = repository) {
-  const result = spawnSync(executable, args, { cwd, stdio: "inherit", shell: false });
-  if (result.error) throw result.error;
-  if (result.status !== 0) {
-    throw new Error("Command exited with status " + (result.status ?? result.signal));
-  }
-}
-
-function pnpm(args) {
-  const runner = process.env.npm_execpath;
-  if (!runner) {
-    throw new Error("Run through the pinned package manager: pnpm preview:install -- <final-directory>.");
-  }
-  const js = /\.(?:c?js|mjs)$/i.test(runner);
-  command(js ? process.execPath : runner, js ? [runner, ...args] : args);
-}
+import { copyFile, mkdir, readFile, writeFile } from "node:fs/promises";
+import { join } from "node:path";
+import { repository, command, pnpm, requireNewDestination } from "./preview-utils.mjs";
 
 async function install(argv) {
   const args = argv[0] === "--" ? argv.slice(1) : argv;
@@ -38,15 +13,10 @@ async function install(argv) {
     throw new Error("Provide one final destination: pnpm preview:install -- <final-directory>.");
   }
 
-  const destination = resolve(args[0]);
-  if (within(repository, destination)) {
-    throw new Error("Choose a final installation directory outside the source repository.");
-  }
-  const existing = await lstat(destination).catch((error) => {
-    if (error.code === "ENOENT") return undefined;
-    throw error;
-  });
-  if (existing) throw new Error("Destination already exists; refusing to overwrite: " + destination);
+  const destination = await requireNewDestination(
+    args[0],
+    "Choose a final installation directory outside the source repository.",
+  );
 
   const packageJson = JSON.parse(await readFile(join(repository, "packages/node-app/package.json"), "utf8"));
   if (packageJson.private !== true) throw new Error("Preview installer requires the MCP workspace to remain private.");

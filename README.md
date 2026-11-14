@@ -1,6 +1,6 @@
 # Semantic State Runtime
 
-[![CI](https://github.com/oaslananka/semantic-state-runtime/actions/workflows/ci.yml/badge.svg)](https://github.com/oaslananka/semantic-state-runtime/actions/workflows/ci.yml) [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![CI](https://github.com/oaslananka/semantic-state-runtime/actions/workflows/ci.yml/badge.svg)](https://github.com/oaslananka/semantic-state-runtime/actions/workflows/ci.yml) [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [![GitGem](https://gitgem.org/api/badge/github/oaslananka/semantic-state-runtime.svg)](https://gitgem.org/github/oaslananka/semantic-state-runtime)
 
 **Durable, authoritative context for AI agents — accessible through MCP.**
 
@@ -51,6 +51,8 @@ See [the source-based Developer Preview installer](docs/preview-install.md).
 It builds a production-only installation at a **new, explicit final path**.
 On Windows, do not move that installed folder afterward; this is **not**
 yet an npm/npx package or a cross-platform portable archive.
+
+A **local, unpublished npm tarball** can also be built with `pnpm preview:pack -- <new-staging-directory>`; `pnpm test:preview-pack` verifies offline npm installation and real MCP tool calls. See [preview packaging](docs/preview-install.md#local-npm-tarball-preview-unpublished). Nothing is published to npm or MCP Registry.
 
 The runnable local stdio server is built from source. After creating
 an explicit configuration file using the
