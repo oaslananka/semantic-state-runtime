@@ -5,3 +5,7 @@ allowBuilds:
   esbuild: true
 
 minimumReleaseAge: 1440
+
+# Keep transitive MCP SDK validators on a patched Zod release.
+overrides:
+  zod: 4.6.7
