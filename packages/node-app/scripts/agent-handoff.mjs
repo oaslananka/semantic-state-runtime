@@ -14,29 +14,28 @@ const primary = join(root, "primary");
 const replica = join(root, "replica");
 
 function manifest(id, writable) {
+  const access = writable ? ["read", "write"] : ["read"];
   return {
     schemaVersion: "0.1",
     id,
     displayName: id,
     capabilities: {
-      read: true,
-      write: writable,
-      observe: true,
-      subscribe: false,
-      revisions: "opaque",
-      idempotency: "none",
+      read: true, write: writable, observe: true, subscribe: false,
+      revisions: "opaque", idempotency: "none",
     },
     entities: [{
       canonicalType: "Project",
       externalType: "markdown",
-      fields: [
-        { canonical: "Project.deadline", external: "deadline", access: writable ? ["read", "write"] : ["read"] },
-        { canonical: "Project.secret", external: "secret", access: writable ? ["read", "write"] : ["read"] },
-      ],
+      fields: ["deadline", "secret"].map((property) => ({
+        canonical: "Project." + property,
+        external: property,
+        access,
+      })),
     }],
   };
 }
 
+const sources = ["primary", "replica"];
 const config = {
   schemaVersion: "1",
   journalPath: "./journal/runtime.sqlite",
@@ -44,28 +43,25 @@ const config = {
     semanticStatePath: "./context/semantic.sqlite",
     ingestionStatePath: "./context/ingestion.sqlite",
     artifactStoreRoot: "./context/artifacts",
-    sources: [
-      { provider: "primary", externalType: "markdown" },
-      { provider: "replica", externalType: "markdown" },
-    ],
+    sources: sources.map((provider) => ({ provider, externalType: "markdown" })),
     maxBudgetTokens: 512,
   },
-  principal: { subject: "user:demo", scopes: ["state:read", "state:write", "context:read"] },
-  providers: [
-    { id: "primary", root: "./primary", manifest: manifest("primary", false) },
-    { id: "replica", root: "./replica", manifest: manifest("replica", true) },
-  ],
+  principal: {
+    subject: "user:demo",
+    scopes: ["state:read", "state:write", "context:read"],
+  },
+  providers: sources.map((id) => ({
+    id, root: "./" + id, manifest: manifest(id, id === "replica"),
+  })),
   entities: [{
     entityId,
     aliases: ["Project Atlas", "Atlas"],
-    bindings: [
-      { provider: "primary", externalId: "project.md", canonicalType: "Project" },
-      { provider: "replica", externalId: "project.md", canonicalType: "Project" },
-    ],
-    authority: [
-      { property: "Project.deadline", provider: "primary" },
-      { property: "Project.secret", provider: "primary" },
-    ],
+    bindings: sources.map((provider) => ({
+      provider, externalId: "project.md", canonicalType: "Project",
+    })),
+    authority: ["deadline", "secret"].map((property) => ({
+      property: "Project." + property, provider: "primary",
+    })),
   }],
   policy: {
     operations: { plan: true, apply: true },

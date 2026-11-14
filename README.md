@@ -1,6 +1,6 @@
 # Semantic State Runtime Lab
 
-Private engineering lab for a user-owned, protocol-neutral Personal AI Runtime.
+Open engineering lab for a user-owned, protocol-neutral Personal AI Runtime.
 
 The repository is testing the hard infrastructure needed for one person's durable context to remain usable across AI models and agent transports without making any model vendor or source application the canonical owner of that context.
 
