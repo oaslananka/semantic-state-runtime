@@ -36,7 +36,8 @@
     "benchmark:replication:opaque-store:v1": "node benchmarks/opaque-store-v1.ts",
     "benchmark:replication:opaque-incremental-merkle:v1": "node benchmarks/opaque-incremental-merkle-v1.ts",
     "preview:pack": "node scripts/preview-pack.mjs",
-    "test:preview-pack": "node scripts/preview-pack-smoke.mjs"
+    "test:preview-pack": "node scripts/preview-pack-smoke.mjs",
+    "release:pack": "node scripts/preview-pack.mjs --publishable"
   },
   "devDependencies": {
     "@types/node": "26.6.5",

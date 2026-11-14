@@ -106,7 +106,7 @@ async function runCliHelpCheck() {
   for (const flag of ["--version", "-V"]) {
     const result = await runCliArgs([flag]);
     assert.equal(result.code, 0);
-    assert.match(result.stdout, /^ssrl-node 0\.0\.0\r?\n$/);
+    assert.match(result.stdout, /^ssrl-node 0\.1\.0-beta\.1\r?\n$/);
     assert.equal(result.stderr, "");
   }
 

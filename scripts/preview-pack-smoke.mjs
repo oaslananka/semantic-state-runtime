@@ -73,6 +73,43 @@ try {
   runNode([cli, "--version"], { cwd: consumer });
   npm(["exec", "--offline", "--no", "--", "ssrl-node", "--help"], consumer);
   runNode([e2e], { cwd: consumer, env: { SSRL_TEST_CLI_PATH: cli } });
+  assert.match(await readFile(join(installed, "THIRD_PARTY_NOTICES.txt"), "utf8"), /LICENSES/);
+
+  const releaseStage = join(root, "release-stage");
+  const releaseConsumer = join(root, "release-consumer");
+  const example = join(root, "synthetic-example");
+  runNode([packager, "--publishable", releaseStage]);
+  const releaseManifest = JSON.parse(await readFile(join(releaseStage, "package.json"), "utf8"));
+  assert.equal(releaseManifest.private, false);
+  assert.equal(releaseManifest.version, "0.1.0-beta.1");
+  assert.equal(releaseManifest.name, "semantic-state-runtime");
+  assert.equal(releaseManifest.license, "MIT");
+  assert.equal(releaseManifest.publishConfig.tag, "next");
+  assert.match(releaseManifest.repository.url, /github\.com\/oaslananka\/semantic-state-runtime/);
+  assert.deepEqual(releaseManifest.dependencies ?? {}, {});
+  assert.match(await readFile(join(releaseStage, "THIRD_PARTY_NOTICES.txt"), "utf8"), /LICENSES/);
+  npm(["publish", "--dry-run", "--tag", "next", "--access", "public", "--json"], releaseStage, true);
+  const releasePacked = JSON.parse(npm(["pack", "--json", "--pack-destination", root], releaseStage, true));
+  assert.equal(releasePacked.length, 1);
+  const paths = releasePacked[0].files.map((f) => f.path);
+  assert.ok(paths.includes("THIRD_PARTY_NOTICES.txt"));
+  assert.ok(paths.includes("bin/demo-init.mjs"));
+  assert.ok(!paths.some((path) => /\.npmrc|\.env|\.git|node_modules|\.sqlite/.test(path)));
+  await mkdir(releaseConsumer);
+  npm(["install", "--offline", "--ignore-scripts", "--no-audit", "--no-fund", "--prefix", releaseConsumer, join(root, releasePacked[0].filename)], releaseConsumer);
+  const releaseInstalled = join(releaseConsumer, "node_modules/semantic-state-runtime");
+  const entry = join(releaseInstalled, "dist/cli.js");
+  const demoInit = join(releaseInstalled, "bin/demo-init.mjs");
+  npm(["exec", "--offline", "--no", "--", "ssrl-demo-init", example], releaseConsumer);
+  const demoConfig = JSON.parse(await readFile(join(example, "ssrl.config.json"), "utf8"));
+  assert.deepEqual(demoConfig.principal.scopes, ["state:read", "context:read"]);
+  assert.deepEqual(demoConfig.policy.operations, { plan: false, apply: false });
+  runNode([join(repository, "packages/node-app/scripts/installed-demo-smoke.mjs")], {
+    cwd: releaseConsumer,
+    env: { SSRL_TEST_CLI_PATH: entry, SSRL_TEST_CONFIG_PATH: join(example, "ssrl.config.json") },
+  });
+  runNode([demoInit, "--help"], { cwd: releaseConsumer });
+  console.log("Unpublished npm next-tag candidate and read-only installed MCP first-run PASS");
   console.log("Offline npm tarball installation and installed MCP tool calls passed");
 } finally {
   await rm(root, { recursive: true, force: true });
