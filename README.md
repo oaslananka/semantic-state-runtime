@@ -1,8 +1,8 @@
 # Semantic State Runtime
 
-[![CI](https://github.com/oaslananka/semantic-state-runtime/actions/workflows/ci.yml/badge.svg)](https://github.com/oaslananka/semantic-state-runtime/actions/workflows/ci.yml)
+[![CI](https://github.com/oaslananka/semantic-state-runtime/actions/workflows/ci.yml/badge.svg)](https://github.com/oaslananka/semantic-state-runtime/actions/workflows/ci.yml) [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-**Durable, authoritative context for AI agents ` accessible through MCP.**
+**Durable, authoritative context for AI agents — accessible through MCP.**
 
 > **Status: Developer Preview.** This is a working engineering runtime and MCP
 > server, not a released consumer app, hosted service, or npm package.
@@ -96,9 +96,8 @@ See [OpenCode and Goose examples](examples/README.md) and the separate
   synthetic client onboarding and regression tests.
 - **Not yet delivered:** independently validated real-user onboarding,
   public npm/MCP Registry distribution, or a supported consumer release.
-- **Licensing:** no `LICENSE` file has been selected or published yet.
-  The repository is publicly viewable, but that does **not** by itself
-  grant permission to redistribute or reuse its code.
+- **License:** [MIT](LICENSE), copyright (c) 2026 Osman Aslan. Reuse and
+  distribution are permitted under the license's notice requirements.
 - **Participation:** read [Contributing](CONTRIBUTING.md) and
   [Security](SECURITY.md). Security issues can be reported privately.
 
@@ -160,7 +159,7 @@ See `docs/invariants.md` and the versioned design documents under `docs/`.
 
 ## Near-term gaps
 
-The lab is not yet a consumer product. Important remaining work includes:
+The runtime is a Developer Preview, not a consumer product. Important remaining work includes:
 
 - more source connectors and semantic mappings;
 - historical context-access semantics;
