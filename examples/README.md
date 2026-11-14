@@ -39,3 +39,54 @@ The live demo uses synthetic records, temporary local SQLite/Markdown files, fou
 To exercise **the same MCP wiring without an API key or network access**, run `pnpm test:llm-handoff`. That smoke test uses stubbed model responses: it does **not** prove external inference.
 
 **Evidence boundary:** Two distinct live model families are tested behind the **same NVIDIA gateway**, not two independent hosted providers, not two separately installed chat apps, and not cross-device sync. Real external user data and production access are intentionally excluded.
+
+## OpenCode v2 first-use (local MCP)
+
+OpenCode **v2.3.0** was tested against a real local SSRL stdio process and a
+synthetic, authorized Project Atlas context fixture. Its model consumed the
+authorized deadline through the MCP text fallback and answered **2026-11-20**.
+The app's built-in MCP display may initially report no servers on a cold
+start; check the actual chat tool invocation rather than assuming success
+from the registration listing.
+
+After building SSRL and preparing an explicit local runtime configuration
+(see `docs/local-node-runtime-v1.md`), put the following
+NaNopencode.json` in the **chat workspace**, not in the SSRL source tree.
+Replace the two absolute paths with your own authorized runtime locations
+(and escape backslashes if using Windows JSON paths):
+
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": { "servers": {
+    "ssrl": {
+      "type": "local",
+      "command": [
+        "node",
+        "/absolute/path/to/ssrl/packages/node-app/dist/cli.js",
+        "/absolute/path/to/your-ssrl-config.json"
+      ],
+      "codemode": false
+    }
+  } },
+  "permissions": [
+    { "action": "ssrl_context_compile", "resource": "*", "effect": "allow" },
+    { "action": "ssrl_state_plan", "resource": "*", "effect": "deny" },
+    { "action": "ssrl_state_apply", "resource": "*", "effect": "deny" }
+  ]
+}
+```
+
+Use an existing, free NVIDIA Build API key exported as `NVIDIA_API_KEY`.
+Run the CLI in the chat workspace (not in the SSRL source checkout):
+
+```bash
+opencode run --standalone --model nvidia/nvidia/nemotron-3.5-lightning-30b-a3b "Call ssrl_context_compile with budgetTokens 180 to read the current authorized Project Atlas deadline. Use the tool result, not a guess."
+```
+
+These example permissions allow **read-only** context access; state
+planning/application tools are intentionally denied. No raw notes or
+credentials belong in chat prompts or repository config. The result
+depends on the entities and policies in your actual SSRL runtime config.
+This checks one chat app and one NVIDIA-hosted model, **not** cross-device
+sync, separate model providers, or independent human-user acceptance.

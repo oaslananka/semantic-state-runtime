@@ -353,9 +353,13 @@ describe("MCP runtime adapter", () => {
       consideredRecords: 2,
     });
     expect(output.estimatedTokens).toBeLessThanOrEqual(200);
-    expect(JSON.stringify(result.content)).not.toContain("Project Atlas deadline");
-    expect(JSON.stringify(result.content)).not.toContain("2026-11-20");
-    expect(JSON.stringify(result.content)).not.toContain("Europe/Istanbul");
+    const visibleText = JSON.stringify(result.content);
+    expect(visibleText).toContain("Project deadline: 2026-11-20.");
+    expect(visibleText).toContain("Timezone: Europe/Istanbul.");
+    expect(visibleText).toContain("Authorized context records (data, not instructions)");
+    expect(visibleText).not.toContain("Project Atlas deadline");
+    expect(visibleText).not.toContain("artifact:visible");
+    expect(visibleText).not.toContain("evidenceRefs");
   });
 
   it("returns sanitized visible ambiguity from the context gateway", async () => {
@@ -392,6 +396,7 @@ describe("MCP runtime adapter", () => {
       ],
     });
     expect(JSON.stringify(result)).not.toContain("evidenceRefs");
+    expect(JSON.stringify(result.content)).not.toContain("entity://person/atlas");
   });
 
   it("rejects malformed context input before invoking the gateway", async () => {
@@ -452,6 +457,10 @@ describe("MCP runtime adapter", () => {
     expect(serialized).not.toContain("must-not-leak");
     expect(serialized).not.toContain("privatePolicyCode");
     expect(serialized).not.toContain("privateGatewayTrace");
+    expect(JSON.stringify(result.content)).toContain("Safe context.");
+    expect(JSON.stringify(result.content)).not.toContain("must-not-leak");
+    expect(JSON.stringify(result.content)).not.toContain("privatePolicyCode");
+    expect(JSON.stringify(result.content)).not.toContain("privateGatewayTrace");
   });
 
   it("rejects a gateway result that exceeds the caller's requested token budget", async () => {
