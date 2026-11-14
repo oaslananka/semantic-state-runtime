@@ -14,7 +14,7 @@
     "test:stdio": "node packages/node-app/scripts/stdio-e2e.mjs",
     "demo:handoff": "node packages/node-app/scripts/agent-handoff.mjs",
     "demo:llm-handoff": "node packages/node-app/scripts/llm-handoff.mjs",
-    "test:llm-handoff": "node --test packages/node-app/scripts/llm-handoff.test.mjs",
+    "test:llm-handoff": "node --test packages/node-app/scripts/llm-handoff-smoke.mjs",
     "benchmark:context:v1": "node benchmarks/context-v1-state.ts",
     "benchmark:context:v2": "node benchmarks/context-v2-identity-graph.ts",
     "benchmark:google-calendar:v1": "node benchmarks/google-calendar-v1.ts",
