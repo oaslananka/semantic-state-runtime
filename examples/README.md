@@ -21,3 +21,21 @@ The script creates temporary synthetic Markdown project notes and local SQLite s
 All storage is temporary and cleaned up. The script uses no API keys, external LLMs, paid services, or cloud infrastructure.
 
 **Evidence boundary:** This proves a local, sequential MCP-client handoff and restart persistence in one deterministic fixture. It does **not** prove cross-device encrypted replication, real multi-model interoperability, real-user task success, or retrieval accuracy on external datasets.
+
+## Optional: two live LLM models using the same MCP state
+
+The second demo makes **four real inference calls** to two different model families through NVIDIA's hosted, free developer endpoint: **Nemotron 3.5 Bolt E4B** (Agent A) and **Mistral Large 4** (Agent B). Each agent creates a new MCP client/session against the actual built local SSRL stdio server. Agent A's model-generated tool calls plan and apply the reconciliation; after the runtime restarts, Agent B's model-generated call fetches context and its model answers the deadline question. The orchestrator enforces exact entity/digest preconditions and never sends raw project files or policy-denied fields to the inference service.
+
+Use a NVIDIA Build API key with access to these **free endpoints**. Set `NVIDIA_API_KEY` in your shell, but never commit or paste the value into the repository. No credentials are required for the default deterministic demo.
+
+```bash
+pnpm install --frozen-lockfile
+pnpm build
+pnpm demo:llm-handoff
+```
+
+The live demo uses synthetic records, temporary local SQLite/Markdown files, four bounded requests (no automatic retry), and cleans up afterward. API availability and provider free-tier terms can change; this is not a guarantee that other endpoints or higher-volume usage are free.
+
+To exercise **the same MCP wiring without an API key or network access**, run `pnpm test:llm-handoff`. That smoke test uses stubbed model responses: it does **not** prove external inference.
+
+**Evidence boundary:** Two distinct live model families are tested behind the **same NVIDIA gateway**, not two independent hosted providers, not two separately installed chat apps, and not cross-device sync. Real external user data and production access are intentionally excluded.

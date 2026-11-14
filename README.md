@@ -14,7 +14,9 @@ pnpm build
 pnpm demo:handoff
 ```
 
-This uses synthetic files and SQLite, not actual LLM vendors or cloud sync. See [the demo walkthrough](examples/README.md) for its evidence boundaries.
+For an optional real two-model MCP handoff using free NVIDIA Build endpoints, see [examples/README.md](examples/README.md) (`pnpm demo:llm-handoff`).
+
+The deterministic command uses synthetic files and SQLite without an LLM. The optional live command adds two real model APIs to that same synthetic, policy-scoped MCP scenario; neither demonstrates cross-device sync. See [the demo walkthrough](examples/README.md) for evidence boundaries.
 
 ## Current architecture
 
