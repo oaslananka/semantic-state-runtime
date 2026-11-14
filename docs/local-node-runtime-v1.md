@@ -23,7 +23,7 @@ node packages/node-app/dist/cli.js ./ssrl.config.json
 
 The process writes MCP protocol traffic only to stdout. Startup warnings and transport diagnostics go to stderr.
 
-Exactly one config path is required. There is no implicit vault discovery.
+Exactly one config path is required to start the MCP server. There is no implicit vault discovery. For usage or package version without starting a server, use `node packages/node-app/dist/cli.js --help` or `node packages/node-app/dist/cli.js --version`.
 
 ## Config v1
 
