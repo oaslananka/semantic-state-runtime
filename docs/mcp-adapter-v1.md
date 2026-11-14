@@ -62,7 +62,7 @@ Properties:
 - delegates directly to `ContextAccessGateway.compile()`;
 - v1 exposes current context only: there are no MCP `validAt` / `knownAt` parameters;
 - does not reimplement identity resolution, capsule freshness, relation expansion, policy filtering, provenance filtering, or BM25 ranking;
-- successful text content contains only resolution/record/token counts and does not echo task or context text;
+- successful text content contains resolution/record/token counts plus JSON-encoded, already-authorized record text from the validated structured output for text-only MCP clients; it never echoes raw task text, private gateway fields, hidden candidates, or evidence identifiers;
 - structured output contains the gateway's already-authorized resolution, records, entity IDs, and token/count metadata;
 - successful structured output is reparsed through the exported MCP output schema, stripping unknown runtime fields from custom gateway implementations;
 - a gateway result whose estimated token count exceeds the caller's requested budget is rejected rather than published as success.
@@ -148,7 +148,7 @@ The suite verifies:
 
 - state-only servers still expose exactly `state.plan` + `state.apply`;
 - context-enabled servers add `context.compile` with read-only annotations;
-- context principal/task/budget delegation and structured-output validation;
+- context principal/task/budget delegation, schema-sanitized text-visible authorized records, and structured-output validation;
 - malformed context input before gateway invocation;
 - sanitized context denial/limit/synchronization/unexpected errors;
 - policy-filtered plan output
