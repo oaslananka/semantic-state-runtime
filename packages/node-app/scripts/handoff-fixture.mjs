@@ -5,6 +5,28 @@ import { fileURLToPath } from "node:url";
 import { Client } from "@modelcontextprotocol/client";
 import { StdioClientTransport } from "@modelcontextprotocol/client/stdio";
 
+function manifest(id, writable) {
+  const access = writable ? ["read", "write"] : ["read"];
+  return {
+    schemaVersion: "0.1",
+    id,
+    displayName: id,
+    capabilities: {
+      read: true, write: writable, observe: true, subscribe: false,
+      revisions: "opaque", idempotency: "none",
+    },
+    entities: [{
+      canonicalType: "Project",
+      externalType: "markdown",
+      fields: ["deadline", "secret"].map((property) => ({
+        canonical: "Project." + property,
+        external: property,
+        access,
+      })),
+    }],
+  };
+}
+
 export async function createHandoffFixture() {
   const entityId = "entity://project/atlas";
   const root = await mkdtemp(join(tmpdir(), "ssrl-agent-handoff-"));
@@ -13,27 +35,6 @@ export async function createHandoffFixture() {
   const primary = join(root, "primary");
   const replica = join(root, "replica");
 
-  function manifest(id, writable) {
-    const access = writable ? ["read", "write"] : ["read"];
-    return {
-      schemaVersion: "0.1",
-      id,
-      displayName: id,
-      capabilities: {
-        read: true, write: writable, observe: true, subscribe: false,
-        revisions: "opaque", idempotency: "none",
-      },
-      entities: [{
-        canonicalType: "Project",
-        externalType: "markdown",
-        fields: ["deadline", "secret"].map((property) => ({
-          canonical: "Project." + property,
-          external: property,
-          access,
-        })),
-      }],
-    };
-  }
 
   const sources = ["primary", "replica"];
   const config = {
@@ -80,19 +81,19 @@ export async function createHandoffFixture() {
     await client.connect(transport);
     return client;
   }
-    await access(cli);
-    await Promise.all([mkdir(primary), mkdir(replica)]);
-    await writeFile(
-      join(primary, "project.md"),
-      '---\ndeadline: "2026-11-20"\nsecret: "PRIVATE-EVIDENCE"\n---\n# Authorized source\n',
-      "utf8",
-    );
-    await writeFile(
-      join(replica, "project.md"),
-      '---\ndeadline: "2026-11-15"\nsecret: "REPLICA-ONLY-SECRET"\nunrelated: keep\n---\n# Replica\n',
-      "utf8",
-    );
-    await writeFile(configPath, JSON.stringify(config, null, 2), "utf8");
+  await access(cli);
+  await Promise.all([mkdir(primary), mkdir(replica)]);
+  await writeFile(
+    join(primary, "project.md"),
+    '---\ndeadline: "2026-11-20"\nsecret: "PRIVATE-EVIDENCE"\n---\n# Authorized source\n',
+    "utf8",
+  );
+  await writeFile(
+    join(replica, "project.md"),
+    '---\ndeadline: "2026-11-15"\nsecret: "REPLICA-ONLY-SECRET"\nunrelated: keep\n---\n# Replica\n',
+    "utf8",
+  );
+  await writeFile(configPath, JSON.stringify(config, null, 2), "utf8");
 
   return {
     entityId, root, replica, primary, connect,

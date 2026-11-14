@@ -28,7 +28,7 @@ const tools = {
 
 async function nvidiaChat({ model, messages, requestedTool }) {
   const apiKey = process.env.NVIDIA_API_KEY;
-  if (!apiKey) throw Error("NVIDIA_API_KEY is required for the live demo.");
+  if (!apiKey) throw new Error("NVIDIA_API_KEY is required for the live demo.");
   const body = {
     model, messages, stream: false, temperature: 0, max_tokens: 256,
     parallel_tool_calls: false,
@@ -43,10 +43,10 @@ async function nvidiaChat({ model, messages, requestedTool }) {
     body: JSON.stringify(body),
     signal: AbortSignal.timeout(65000),
   });
-  if (!response.ok) throw Error("NVIDIA model request failed (HTTP " + response.status + ").");
+  if (!response.ok) throw new Error("NVIDIA model request failed (HTTP " + response.status + ").");
   const value = await response.json();
   const message = value.choices?.[0]?.message;
-  if (!message) throw Error("Missing model response.");
+  if (!message) throw new Error("Missing model response.");
   return message;
 }
 
@@ -63,7 +63,8 @@ function requestedCall(message, name) {
 }
 
 function allowArguments(args, keys) {
-  assert.deepEqual(Object.keys(args).sort(), keys.slice().sort(),
+  assert.deepEqual(Object.keys(args).sort((a, b) => a.localeCompare(b)),
+    keys.slice().sort((a, b) => a.localeCompare(b)),
     "Unexpected or missing tool arguments.");
 }
 
