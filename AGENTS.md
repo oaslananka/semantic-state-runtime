@@ -11,7 +11,7 @@ These instructions apply repository-wide. Read `docs/invariants.md` before chang
 
 ## Repository posture
 
-This repository is a private engineering lab for a protocol-neutral personal AI runtime. It is not yet a consumer product.
+This repository is a public engineering lab for a protocol-neutral personal AI runtime. It is not yet a consumer product.
 
 Do not turn experimental capability into product claims. Benchmarks and local demonstrations prove only the exact scenario executed.
 
