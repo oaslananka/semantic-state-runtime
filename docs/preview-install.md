@@ -16,7 +16,9 @@ pnpm preview:install -- ../ssrl-preview-runtime
 node ../ssrl-preview-runtime/dist/cli.js --help
 ~~~
 
-The command builds the source and deploys only production dependencies to **one new directory**, then checks the installed CLI. Select the **final directory** deliberately. The installer refuses to overwrite a path that already exists, refuses destinations inside the source checkout, and does not delete existing files.
+The command builds the source and deploys only production dependencies to **one new directory**, then checks the installed CLI.
+The installed folder includes its own **MIT LICENSE notice** and the
+local runtime/configuration guide under docs/. Select the **final directory** deliberately. The installer refuses to overwrite a path that already exists, refuses destinations inside the source checkout, and does not delete existing files.
 
 **Windows:** pnpm currently emits absolute directory junctions in this preview deployment. The installed runtime works at its original destination but **moving or renaming the directory can break it**. Choose the final path first; for a different path, run the preview installation into another *new* directory. Do not promise a relocatable Windows ZIP.
 

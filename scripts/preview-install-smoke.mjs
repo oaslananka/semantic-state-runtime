@@ -34,6 +34,12 @@ try {
   assert.equal(installation.status, 0, "Preview installation did not complete");
   const manifest = JSON.parse(await readFile(join(initial, "package.json"), "utf8"));
   assert.equal(manifest.private, true);
+  assert.equal(manifest.license, "MIT");
+  const notice = await readFile(join(initial, "LICENSE"), "utf8");
+  assert.match(notice, /^MIT License\n/);
+  assert.match(notice, /Copyright \(c\) 2026 Osman Aslan/);
+  assert.match(await readFile(join(initial, "docs/local-node-runtime-v1.md"), "utf8"), /Local Node runtime v1/);
+  assert.match(await readFile(join(initial, "docs/preview-install.md"), "utf8"), /Developer Preview/);
   const overwrite = run([installer, initial], { expectFailure: true });
   assert.notEqual(overwrite.status, 0);
   assert.match(overwrite.stderr, /Destination already exists; refusing to overwrite/);

@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { lstat, readFile } from "node:fs/promises";
+import { copyFile, lstat, mkdir, readFile, writeFile } from "node:fs/promises";
 import { isAbsolute, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -53,6 +53,17 @@ async function install(argv) {
 
   pnpm(["build"]);
   pnpm(["--filter", "@ssrl/node-app", "deploy", "--prod", destination]);
+
+  // The deployed private workspace package does not inherit the root MIT license.
+  await copyFile(join(repository, "LICENSE"), join(destination, "LICENSE"));
+  await mkdir(join(destination, "docs"), { recursive: true });
+  for (const name of ["local-node-runtime-v1.md", "preview-install.md"]) {
+    await copyFile(join(repository, "docs", name), join(destination, "docs", name));
+  }
+  const installedManifest = join(destination, "package.json");
+  const manifest = JSON.parse(await readFile(installedManifest, "utf8"));
+  manifest.license = "MIT";
+  await writeFile(installedManifest, JSON.stringify(manifest, null, 2) + "\n", "utf8");
 
   const cli = join(destination, "dist/cli.js");
   command(process.execPath, [cli, "--help"], destination);
