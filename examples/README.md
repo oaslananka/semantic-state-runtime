@@ -89,10 +89,8 @@ It called `ssrl__context_compile` exactly once and replied
 fields were absent. OpenCode and Goose are **two different chat clients**,
 but both tests used **one NVIDIA API gateway on one Windows machine**.
 
-For reproduction, use the [Goose provider setup]
-(https://goose-docs.ai/docs/getting-started/providers/) and
-[stdio extension configuration]
-(https://goose-docs.ai/docs/getting-started/using-extensions/):
+For reproduction, see the [Goose provider setup](https://goose-docs.ai/docs/getting-started/providers/)
+and [stdio extension configuration](https://goose-docs.ai/docs/getting-started/using-extensions/):
 
 1. Keep Goose's settings in a temporary, isolated `GOOSE_PATH_ROOT`
    and use the built SSRL CLI plus the generated workspace's `config.json`

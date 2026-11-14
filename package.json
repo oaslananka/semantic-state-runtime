@@ -1,5 +1,5 @@
 {
-  "name": "semantic-state-runtime-lab",
+  "name": "semantic-state-runtime",
   "private": true,
   "type": "module",
   "packageManager": "pnpm@12.14.0",

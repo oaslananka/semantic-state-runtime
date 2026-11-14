@@ -1,4 +1,4 @@
-# Semantic State Runtime Lab Agent Instructions
+# Semantic State Runtime Agent Instructions
 
 These instructions apply repository-wide. Read `docs/invariants.md` before changing semantics, authority, replication, access, identity, journaling, or transport behavior.
 
