@@ -4,7 +4,7 @@ import { readFile, stat } from "node:fs/promises";
 import { join } from "node:path";
 import { Client } from "@modelcontextprotocol/client";
 import { StdioClientTransport } from "@modelcontextprotocol/client/stdio";
-import { cleanupChatWorkspace, prepareChatWorkspace } from "./chat-setup.mjs";
+import { assertModelVisibleReadback, cleanupChatWorkspace, prepareChatWorkspace } from "./chat-setup.mjs";
 
 test("fresh chat workspace is read-only, authorized, and cleanly disposable", async () => {
   const root = await prepareChatWorkspace();
@@ -65,4 +65,32 @@ test("cleanup rejects arbitrary paths", async () => {
     cleanupChatWorkspace(process.cwd()),
     /Refusing to delete anything outside/,
   );
+});
+
+test("setup refuses a stale MCP build that hides the authorized record from chat", () => {
+  const staleResult = {
+    isError: false,
+    structuredContent: {
+      resolution: { status: "resolved", entityId: "entity://project/atlas" },
+      records: [{ entityId: "entity://project/atlas", text: "Deadline: 2026-11-20." }],
+    },
+    content: [{ type: "text", text: "Context resolution: resolved. Records: 1." }],
+  };
+  assert.throws(() => assertModelVisibleReadback(staleResult), /Run pnpm build and retry/);
+  assert.doesNotThrow(() => assertModelVisibleReadback({
+    ...staleResult,
+    content: [{ type: "text", text: "Authorized deadline: 2026-11-20." }],
+  }));
+});
+
+test("setup rejects policy-denied evidence even if the date is visible", () => {
+  const result = {
+    isError: false,
+    structuredContent: {
+      resolution: { status: "resolved", entityId: "entity://project/atlas" },
+      records: [{ entityId: "entity://project/atlas", text: "Deadline: 2026-11-20." }],
+    },
+    content: [{ type: "text", text: "2026-11-20 PRIVATE-EVIDENCE" }],
+  };
+  assert.throws(() => assertModelVisibleReadback(result), /denied synthetic field/);
 });
