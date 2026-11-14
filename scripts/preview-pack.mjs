@@ -1,32 +1,7 @@
-import { spawnSync } from "node:child_process";
-import { copyFile, lstat, mkdir, readFile, rm, writeFile } from "node:fs/promises";
-import { isAbsolute, join, relative, resolve, sep } from "node:path";
-import { fileURLToPath } from "node:url";
+import { copyFile, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { join } from "node:path";
 import { build } from "esbuild";
-
-const repository = fileURLToPath(new URL("../", import.meta.url));
-
-function within(parent, target) {
-  const rel = relative(parent, target);
-  return rel === "" || (rel !== ".." && !rel.startsWith(".." + sep) && !isAbsolute(rel));
-}
-
-function run(executable, args, cwd = repository) {
-  const result = spawnSync(executable, args, { cwd, stdio: "inherit", shell: false });
-  if (result.error) throw result.error;
-  if (result.status !== 0) {
-    throw new Error("Command exited with status " + (result.status ?? result.signal));
-  }
-}
-
-function buildWorkspace() {
-  const runner = process.env.npm_execpath;
-  if (!runner || !/pnpm/i.test(runner)) {
-    throw new Error("Use the pinned package manager: pnpm preview:pack -- <new-directory>.");
-  }
-  const js = /\\.(?:c?js|mjs)$/i.test(runner);
-  run(js ? process.execPath : runner, js ? [runner, "build"] : ["build"]);
-}
+import { repository, command, pnpm, requireNewDestination } from "./preview-utils.mjs";
 
 async function packagePreview(argv) {
   const args = argv[0] === "--" ? argv.slice(1) : argv;
@@ -38,15 +13,10 @@ async function packagePreview(argv) {
   if (args.length !== 1 || !args[0] || args[0].startsWith("-")) {
     throw new Error("Provide one new staging directory outside the source repository.");
   }
-  const destination = resolve(args[0]);
-  if (within(repository, destination)) {
-    throw new Error("The npm preview staging directory must be outside the source repository.");
-  }
-  const existing = await lstat(destination).catch((error) => {
-    if (error.code === "ENOENT") return undefined;
-    throw error;
-  });
-  if (existing) throw new Error("Destination already exists; refusing to overwrite: " + destination);
+  const destination = await requireNewDestination(
+    args[0],
+    "The npm preview staging directory must be outside the source repository.",
+  );
 
   const workspace = JSON.parse(await readFile(join(repository, "package.json"), "utf8"));
   const nodeApp = JSON.parse(await readFile(join(repository, "packages/node-app/package.json"), "utf8"));
@@ -54,7 +24,7 @@ async function packagePreview(argv) {
     throw new Error("Public packaging preflight requires private workspaces and the MIT license.");
   }
 
-  buildWorkspace();
+  pnpm(["build"]);
   await mkdir(destination);
   try {
     await mkdir(join(destination, "dist"));
@@ -97,7 +67,7 @@ async function packagePreview(argv) {
         "Run the installed MCP server with `ssrl-node <config.json>`.\n" +
         "See [configuration](docs/local-node-runtime-v1.md) and [upstream source](https://github.com/oaslananka/semantic-state-runtime).\n",
     );
-    run(process.execPath, [join(destination, "dist/cli.js"), "--help"], destination);
+    command(process.execPath, [join(destination, "dist/cli.js"), "--help"], destination);
     console.log("Private npm preview ready: " + destination);
     console.log("Run npm pack from this directory; do not publish this preview.");
   } catch (error) {
