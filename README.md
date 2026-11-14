@@ -1,41 +1,51 @@
 # Semantic State Runtime Lab
 
-Open engineering lab for a user-owned, protocol-neutral Personal AI Runtime.
+**One authoritative fact. Two MCP clients. The right answer after a restart.**
 
-The repository is testing the hard infrastructure needed for one person's durable context to remain usable across AI models and agent transports without making any model vendor or source application the canonical owner of that context.
+Semantic State Runtime Lab is a public engineering project for durable,
+source-aware and policy-scoped AI context. It is **not yet a consumer product**.
 
-## Try it from a fresh clone
+Start with Project Atlas: a local copy says a deadline is November 15, but
+the trusted source says November 20. One MCP client reconciles the difference;
+another client opens a fresh runtime and retrieves the authorized value.
+Restricted evidence stays out of the returned context.
 
-With Node.js 24.12+ and pnpm 12.x, run this no-credential, no-network
-deterministic demo:
+## Try the handoff
 
-```bash
+With Node.js 24.12+ and pnpm 12.x, install dependencies and run the **local, no-key** demo:
+
+~~~bash
 pnpm install --frozen-lockfile
 pnpm build
 pnpm demo:handoff
-```
+~~~
 
-For a real chat model without manually writing MCP configuration, run
-`pnpm demo:chat-setup` from the repo root. It prepares a
-disposable synthetic workspace and prints the tested OpenCode v2.3.0
-command (one free NVIDIA Build API key needed for the subsequent model
-request). The generated runtime is read-only. See
-[first-use instructions](examples/README.md#opencode-v2-first-use-local-mcp).
+Package installation may fetch dependencies; the demo itself makes **no external requests**.
+The output reports the observed **before / authoritative source / after /
+fresh-client answer** values, not an invented chat transcript. It uses
+synthetic Markdown and SQLite files, two real MCP SDK clients, and deletes
+the temporary data when finished. No hosted model is called.
 
-The same synthetic, read-only MCP context was also verified in **Goose CLI v1.59.0**; see [the second-client acceptance](examples/README.md#second-chat-client-goose-cli-verified).
-## Runnable two-agent MCP demo
+**[See the 90-second walkthrough and expected output](examples/SHOWCASE.md).**
 
-A deterministic local demo shows one MCP agent client reconciling a project decision and a second client retrieving current semantic state after a runtime restart:
+## Real AI chat clients
 
-```bash
-pnpm install --frozen-lockfile
-pnpm build
-pnpm demo:handoff
-```
+The same local, read-only SSRL context was separately tested with **OpenCode
+v2.3.0** and **Goose CLI v1.59.0**. In each application a model generated a
+real MCP `context.compile` call and answered `2026-11-20` using the returned
+authorized record. These are two independent chat applications, **not** two
+independent model providers: both used one NVIDIA developer gateway on one
+Windows host and synthetic project data.
 
-For an optional real two-model MCP handoff using free NVIDIA Build endpoints, see [examples/README.md](examples/README.md) (`pnpm demo:llm-handoff`).
+To prepare an isolated OpenCode workspace without authoring MCP JSON by
+hand, run `pnpm demo:chat-setup` after building. It prints an optional
+command requiring an existing NVIDIA developer API key. The preparation
+itself is offline and the generated SSRL principal is **read-only**.
+For the optional live two-model handoff, use `pnpm demo:llm-handoff`.
 
-The deterministic command uses synthetic files and SQLite without an LLM. The optional live command adds two real model APIs to that same synthetic, policy-scoped MCP scenario; neither demonstrates cross-device sync. See [the demo walkthrough](examples/README.md) for evidence boundaries.
+Full instructions and honest limits:
+[OpenCode and Goose walkthroughs](examples/README.md). No cross-device
+synchronization, real-user-data readiness or production hosting is claimed.
 
 ## Current architecture
 
