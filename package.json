@@ -34,10 +34,13 @@
     "benchmark:replication:encrypted:v1": "node benchmarks/encrypted-replication-v1.ts",
     "benchmark:replication:opaque:v1": "node benchmarks/opaque-reconciliation-v1.ts",
     "benchmark:replication:opaque-store:v1": "node benchmarks/opaque-store-v1.ts",
-    "benchmark:replication:opaque-incremental-merkle:v1": "node benchmarks/opaque-incremental-merkle-v1.ts"
+    "benchmark:replication:opaque-incremental-merkle:v1": "node benchmarks/opaque-incremental-merkle-v1.ts",
+    "preview:pack": "node scripts/preview-pack.mjs",
+    "test:preview-pack": "node scripts/preview-pack-smoke.mjs"
   },
   "devDependencies": {
     "@types/node": "26.6.5",
+    "esbuild": "0.28.2",
     "typescript": "7.0.2",
     "vitest": "5.0.5"
   }

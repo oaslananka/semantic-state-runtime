@@ -48,6 +48,9 @@ jobs:
       - name: Preview installation and relocated MCP acceptance
         run: pnpm test:preview-install
 
+      - name: Offline npm preview tarball and installed MCP acceptance
+        run: pnpm test:preview-pack
+
       - name: Two-agent handoff demo smoke test
         run: pnpm demo:handoff
 
