@@ -46,6 +46,12 @@ the network; **the demo itself requires no API key or external model**.
 
 ## Use it as an MCP server
 
+Want the compiled runtime installed outside the source checkout?
+See [the source-based Developer Preview installer](docs/preview-install.md).
+It builds a production-only installation at a **new, explicit final path**.
+On Windows, do not move that installed folder afterward; this is **not**
+yet an npm/npx package or a cross-platform portable archive.
+
 The runnable local stdio server is built from source. After creating
 an explicit configuration file using the
 [local runtime guide](docs/local-node-runtime-v1.md), start the server with:

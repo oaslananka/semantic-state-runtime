@@ -3,7 +3,7 @@ import { spawn } from "node:child_process";
 import { once } from "node:events";
 import { access, mkdir, mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { Client } from "@modelcontextprotocol/client";
 import { StdioClientTransport } from "@modelcontextprotocol/client/stdio";
@@ -14,7 +14,9 @@ const primary = join(root, "primary");
 const replica = join(root, "replica");
 const configPath = join(root, "config.json");
 const journalPath = join(root, "journal", "runtime.sqlite");
-const cliPath = fileURLToPath(new URL("../dist/cli.js", import.meta.url));
+const cliPath = process.env.SSRL_TEST_CLI_PATH
+  ? resolve(process.env.SSRL_TEST_CLI_PATH)
+  : fileURLToPath(new URL("../dist/cli.js", import.meta.url));
 
 const connector = (id, writable) => ({
   schemaVersion: "0.1",
