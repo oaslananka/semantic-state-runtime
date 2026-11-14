@@ -79,6 +79,42 @@ async function connectClient() {
   return { client, stderr: () => stderr };
 }
 
+async function runCliArgs(args) {
+  const child = spawn(process.execPath, [cliPath, ...args], {
+    cwd: root,
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+  let stdout = "";
+  let stderr = "";
+  child.stdout.on("data", (chunk) => { stdout += chunk.toString(); });
+  child.stderr.on("data", (chunk) => { stderr += chunk.toString(); });
+  const [code] = await once(child, "exit");
+  return { code, stdout, stderr };
+}
+
+async function runCliHelpCheck() {
+  for (const flag of ["--help", "-h"]) {
+    const result = await runCliArgs([flag]);
+    assert.equal(result.code, 0);
+    assert.match(result.stdout, /Usage: ssrl-node <config\.json>/);
+    assert.match(result.stdout, /demo:handoff/);
+    assert.equal(result.stderr, "");
+  }
+
+  for (const flag of ["--version", "-V"]) {
+    const result = await runCliArgs([flag]);
+    assert.equal(result.code, 0);
+    assert.match(result.stdout, /^ssrl-node 0\.0\.0\r?\n$/);
+    assert.equal(result.stderr, "");
+  }
+
+  for (const args of [[], ["--unknown"], ["--help", "extra"]]) {
+    const result = await runCliArgs(args);
+    assert.equal(result.code, 2);
+    assert.equal(result.stdout, "");
+    assert.match(result.stderr, /Usage: ssrl-node <config\.json>/);
+  }
+}
 async function runInvalidConfigCheck() {
   const badPath = join(root, "invalid.json");
   await writeFile(badPath, JSON.stringify({ schemaVersion: "0" }), { encoding: "utf8", mode: 0o600 });
@@ -103,6 +139,7 @@ try {
   await writeFile(configPath, JSON.stringify(config, null, 2), { encoding: "utf8", mode: 0o600 });
 
   await access(cliPath);
+  await runCliHelpCheck();
   const first = await connectClient();
   try {
     const tools = await first.client.listTools();
