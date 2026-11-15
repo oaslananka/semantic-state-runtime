@@ -29,7 +29,7 @@ jobs:
     timeout-minutes: 15
     permissions:
       contents: read
-      id-token: write
+      "id-token": write # GitHub OIDC permission, not a credential
     steps:
       - name: Checkout source
         uses: actions/checkout@v7
@@ -37,7 +37,7 @@ jobs:
           persist-credentials: false
 
       - name: Set up pnpm
-        uses: pnpm/action-setup@v6
+        uses: pnpm/action-setup@f53f5227a9e83886ab598c617f3c170fab62f0d3 # v6
         with:
           version: 12.14.0
           run_install: false
@@ -50,7 +50,7 @@ jobs:
           package-manager-cache: false
 
       - name: Use npm CLI with trusted-publisher dist-tag support
-        run: npm install --global npm@12.2.2
+        run: npm install --global --ignore-scripts npm@12.2.2
 
       - name: Install locked build dependencies
         if: inputs.operation == 'publish-next'
