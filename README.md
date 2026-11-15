@@ -3,9 +3,21 @@
 <p align="center">
   <a href="https://github.com/oaslananka/semantic-state-runtime/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/oaslananka/semantic-state-runtime/actions/workflows/ci.yml/badge.svg"></a>
   <a href="https://www.npmjs.com/package/semantic-state-runtime"><img alt="npm release" src="https://img.shields.io/npm/v/semantic-state-runtime.svg"></a>
-  <a href="LICENSE"><img alt="MIT License" src="https://img.shields.io/badge/license-MIT-blue.svg"></a>
-  <a href="https://gitgem.org/github/oaslananka/semantic-state-runtime"><img alt="GitGem" src="https://gitgem.org/api/badge/github/oaslananka/semantic-state-runtime.svg"></a>
+  <a href="LICENSE"><img alt="GPL-3.0-only license" src="https://img.shields.io/badge/license-GPL-3.0-only-blue.svg"></a>
 </p>
+
+<p align="center">
+  <a href="https://www.npmjs.com/package/semantic-state-runtime"><img src="https://img.shields.io/npm/dt/semantic-state-runtime?label=total%20downloads" alt="npm total downloads" /></a>
+  <a href="https://gitgem.org/github/oaslananka/semantic-state-runtime"><img src="https://gitgem.org/api/badge/github/oaslananka/semantic-state-runtime.svg" alt="GitGem" /></a>
+</p>
+
+<p align="center">
+  <a href="https://github.com/sponsors/oaslananka"><img src="https://img.shields.io/badge/GitHub-Sponsors-ea4aaa?logo=githubsponsors" alt="GitHub Sponsors" /></a>
+  <a href="https://www.buymeacoffee.com/oaslananka"><img src="https://img.shields.io/badge/Buy%20Me%20a%20Coffee-Support-ffdd00?logo=buymeacoffee&amp;logoColor=black" alt="Buy Me a Coffee" /></a>
+  <a href="https://github.com/oaslananka/semantic-state-runtime"><img src="https://img.shields.io/github/stars/oaslananka/semantic-state-runtime?label=Stars&amp;color=8e65d3" alt="Stars" /></a>
+</p>
+
+
 
 **Switch AI coding agents without losing the current project facts.**
 
@@ -168,8 +180,7 @@ See [OpenCode and Goose examples](examples/README.md) and the separate
 - **Not yet delivered:** independently validated human onboarding or
   a fully supported consumer product. Registry discoverability is verified
   separately through the official public API after publication.
-- **License:** [MIT](LICENSE), copyright (c) 2026 Osman Aslan. Reuse and
-  distribution are permitted under the license's notice requirements.
+- **License:** [GNU GPL v3.0](LICENSE), copyright (c) 2026 Osman Aslan. Redistribution is subject to the GPL copyleft terms.
 - **Participation:** read [Contributing](CONTRIBUTING.md) and
   [Security](SECURITY.md). Security issues can be reported privately.
 

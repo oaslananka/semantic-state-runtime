@@ -2,7 +2,7 @@
   "name": "semantic-state-runtime",
   "version": "0.3.0",
   "private": true,
-  "license": "MIT",
+  "license": "GPL-3.0-only",
   "type": "module",
   "packageManager": "pnpm@12.14.0",
   "engines": {

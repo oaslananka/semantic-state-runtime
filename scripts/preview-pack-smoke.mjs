@@ -62,7 +62,7 @@ try {
   runNode([packager, stage]);
   const manifest = JSON.parse(await readFile(join(stage, "package.json"), "utf8"));
   assert.equal(manifest.private, true, "Preview must not be publishable");
-  assert.equal(manifest.license, "MIT");
+  assert.equal(manifest.license, "GPL-3.0-only");
   assert.equal(manifest.name, "semantic-state-runtime");
   assert.deepEqual(manifest.dependencies ?? {}, {}, "All workspace dependencies must be bundled");
   assert.deepEqual(manifest.optionalDependencies ?? {}, {});
@@ -76,9 +76,9 @@ try {
   const installed = join(consumer, "node_modules/semantic-state-runtime");
   const installedManifest = JSON.parse(await readFile(join(installed, "package.json"), "utf8"));
   assert.equal(installedManifest.private, true);
-  assert.equal(installedManifest.license, "MIT");
+  assert.equal(installedManifest.license, "GPL-3.0-only");
   assert.equal(installedManifest.version, manifest.version);
-  assert.match(await readFile(join(installed, "LICENSE"), "utf8"), /^MIT License/);
+  assert.match(await readFile(join(installed, "LICENSE"), "utf8"), /GNU GENERAL PUBLIC LICENSE/);
   assert.match(await readFile(join(installed, "README.md"), "utf8"), /Public npm MCP release/);
   const cli = join(installed, "dist/cli.js");
   runNode([cli, "--help"], { cwd: consumer });
@@ -104,7 +104,7 @@ try {
   assert.equal(registry.packages[0].packageArguments[0].valueHint, "configPath");
   assert.equal(registry.packages[0].packageArguments[0].isRequired, true);
   assert.equal(releaseManifest.mcpName, registry.name);
-  assert.equal(releaseManifest.license, "MIT");
+  assert.equal(releaseManifest.license, "GPL-3.0-only");
   assert.equal(releaseManifest.publishConfig.tag, npmDistTag(releaseManifest.version));
   assert.match(releaseManifest.repository.url, /github\.com\/oaslananka\/semantic-state-runtime/);
   assert.deepEqual(releaseManifest.dependencies ?? {}, {});

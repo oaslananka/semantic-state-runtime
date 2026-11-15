@@ -34,10 +34,10 @@ try {
   assert.equal(installation.status, 0, "Preview installation did not complete");
   const manifest = JSON.parse(await readFile(join(initial, "package.json"), "utf8"));
   assert.equal(manifest.private, true);
-  assert.equal(manifest.license, "MIT");
+  assert.equal(manifest.license, "GPL-3.0-only");
   const notice = await readFile(join(initial, "LICENSE"), "utf8");
-  assert.match(notice, /^MIT License\n/);
-  assert.match(notice, /Copyright \(c\) 2026 Osman Aslan/);
+  assert.match(notice, /GNU GENERAL PUBLIC LICENSE/);
+  assert.match(notice, /Copyright \(C\) 2007 Free Software Foundation/);
   assert.match(await readFile(join(initial, "docs/local-node-runtime-v1.md"), "utf8"), /Local Node runtime v1/);
   const installGuide = await readFile(join(initial, "docs/preview-install.md"), "utf8");
   assert.match(installGuide, /Semantic State Runtime/);
