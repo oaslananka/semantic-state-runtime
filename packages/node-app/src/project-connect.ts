@@ -140,7 +140,7 @@ function projectConfig(settings:ProjectSettings,label:string,readmeTitle?:string
       semanticStatePath:"./state/semantic.sqlite",ingestionStatePath:"./state/ingestion.sqlite",
       artifactStoreRoot:"./state/artifacts",
       sources:providers.map(p=>({provider:p.id,externalType:"markdown"})),
-      sourceVerificationMaxAgeMs:0,maxBudgetTokens:1600,
+      sourceVerificationMaxAgeMs:0,maxBudgetTokens:4096,
     },
     principal:{subject:"user:connected-project",scopes:["state:read","context:read"]},
     providers,

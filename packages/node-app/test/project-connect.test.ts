@@ -92,6 +92,21 @@ describe("one-command project connection", () => {
       expect(result.isError).not.toBe(true);
       expect(JSON.stringify(result.structuredContent)).toContain("2026-12-12");
       expect(JSON.stringify(result.structuredContent)).toContain("77");
+      // Codex retries with 2,000 tokens when its first larger request is rejected.
+      // A normal generated project should accept that bounded retry.
+      const retried=await client.callTool({name:"context.compile",arguments:{
+        task:"Project Moonrise handoff deadline and priority issue",
+        budgetTokens:2000,
+      }});
+      expect(retried.isError).not.toBe(true);
+      expect(JSON.stringify(retried.structuredContent)).toContain("2026-12-12");
+      expect(JSON.stringify(retried.structuredContent)).toContain("77");
+      // Requests above the core gateway's bound must still fail closed.
+      const oversized=await client.callTool({name:"context.compile",arguments:{
+        task:"Project Moonrise handoff deadline and priority issue",
+        budgetTokens:6000,
+      }});
+      expect(oversized.isError).toBe(true);
     } finally {
       await client.close();
       await server.close();
