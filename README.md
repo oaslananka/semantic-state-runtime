@@ -1,6 +1,11 @@
-# Semantic State Runtime
+<h1 align="center">Semantic State Runtime</h1>
 
-[![CI](https://github.com/oaslananka/semantic-state-runtime/actions/workflows/ci.yml/badge.svg)](https://github.com/oaslananka/semantic-state-runtime/actions/workflows/ci.yml) [![npm next](https://img.shields.io/npm/v/semantic-state-runtime/next.svg?label=npm%20next)](https://www.npmjs.com/package/semantic-state-runtime) [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [![GitGem](https://gitgem.org/api/badge/github/oaslananka/semantic-state-runtime.svg)](https://gitgem.org/github/oaslananka/semantic-state-runtime)
+<p align="center">
+  <a href="https://github.com/oaslananka/semantic-state-runtime/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/oaslananka/semantic-state-runtime/actions/workflows/ci.yml/badge.svg"></a>
+  <a href="https://www.npmjs.com/package/semantic-state-runtime"><img alt="npm preview" src="https://img.shields.io/npm/v/semantic-state-runtime/next.svg?label=npm%20next"></a>
+  <a href="LICENSE"><img alt="MIT License" src="https://img.shields.io/badge/license-MIT-blue.svg"></a>
+  <a href="https://gitgem.org/github/oaslananka/semantic-state-runtime"><img alt="GitGem" src="https://gitgem.org/api/badge/github/oaslananka/semantic-state-runtime.svg"></a>
+</p>
 
 **Durable, authoritative context for AI agents — accessible through MCP.**
 

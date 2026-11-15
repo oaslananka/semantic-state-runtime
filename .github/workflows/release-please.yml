@@ -1,0 +1,44 @@
+name: Release Please
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+  actions: write
+
+concurrency:
+  group: release-please-main
+  cancel-in-progress: false
+
+jobs:
+  release:
+    if: github.repository == 'oaslananka/semantic-state-runtime' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Prepare version PR or GitHub Release
+        id: release
+        uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+
+      - name: Dispatch npm for the new GitHub Release
+        if: ${{ steps.release.outputs['packages/node-app--release_created'] == 'true' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.release.outputs['packages/node-app--version'] }}
+          TAG: ${{ steps.release.outputs['packages/node-app--tag_name'] }}
+          RELEASE_SHA: ${{ steps.release.outputs['packages/node-app--sha'] }}
+        run: |
+          set -euo pipefail
+          test "$TAG" = "v$VERSION"
+          test "$RELEASE_SHA" = "$GITHUB_SHA"
+          gh workflow run publish.yml --repo "$GITHUB_REPOSITORY" --ref main \
+            --field version="$VERSION" --field tag="$TAG"
