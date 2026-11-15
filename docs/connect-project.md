@@ -25,7 +25,9 @@ The generated workspace includes ready-to-use opencode.json for OpenCode, .agent
 ssrl-connect ./my-project --out ./my-project-ssrl
 ~~~
 
-SSRL reads your selected folder without writing into the repo. If its Git remote origin points to github.com, the connector also discovers and reads that repository's GitHub issue and PR metadata. Use --local-only to prevent remote detection and **any GitHub network requests**; use --github owner/repo to choose a specific GitHub source:
+SSRL reads your selected folder without writing into the repo. If its README includes a short Markdown `# Title` or plain HTML `<h1>` heading, the title becomes another accepted project name beside the folder slug and GitHub repository name (when connected). A later README title change requires reconnecting to update the initial alias.
+
+If the folder's Git remote origin points to github.com, SSRL also discovers read-only GitHub issue and PR metadata. Use `--local-only` to prevent remote detection and **any GitHub network requests**, or `--github owner/repo` to select a specific remote source:
 
 ~~~bash
 ssrl-connect ./my-project --local-only --out ./my-project-ssrl
