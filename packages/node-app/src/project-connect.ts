@@ -257,6 +257,20 @@ async function collectLocalDocuments(root: string): Promise<string> {
     + (skippedLinkedRoot ? "\n[SKIPPED: docs root is a link or not a directory]" : "");
 }
 
+function githubHttpError(response: Response): Error {
+  if(response.status!==403 && response.status!==429) {
+    return new Error("GitHub refresh failed (HTTP "+response.status+").");
+  }
+  const limited=response.status===429 || response.headers.get("x-ratelimit-remaining")==="0";
+  const reset=Number(response.headers.get("x-ratelimit-reset"));
+  const retryAfter=limited && Number.isSafeInteger(reset) && reset>0 && reset<8.64e12
+    ? " Retry after "+new Date(reset*1000).toISOString()+"."
+    : "";
+  return new Error((limited?"GitHub API rate limit reached":"GitHub API access denied")
+    +" (HTTP "+response.status+")."+retryAfter
+    +" Retry later or use an existing GH_TOKEN/GITHUB_TOKEN in your shell."
+    +" No stale GitHub issue or PR data was treated as current.");
+}
 async function githubGet(path:string,fetchImpl:typeof fetch):Promise<unknown> {
   const headers:Record<string,string>={
     accept:"application/vnd.github+json","x-github-api-version":"2022-11-28",
@@ -270,7 +284,7 @@ async function githubGet(path:string,fetchImpl:typeof fetch):Promise<unknown> {
       method:"GET",headers,redirect:"error",signal:AbortSignal.timeout(9000),
     });
   }catch{throw new Error("GitHub refresh unavailable. Old metadata was not served as fresh.");}
-  if(!response.ok)throw new Error("GitHub refresh failed (HTTP "+response.status+").");
+  if(!response.ok)throw githubHttpError(response);
   if(Number(response.headers.get("content-length")??0)>RESPONSE_BYTES)
     throw new Error("GitHub response exceeded 512 KiB.");
   const body=response.body?.getReader();

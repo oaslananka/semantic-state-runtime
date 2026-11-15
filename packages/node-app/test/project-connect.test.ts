@@ -106,6 +106,22 @@ describe("one-command project connection", () => {
     expect(await readFile(join(workspace,"sources/github/project.md"),"utf8")).toBe(before);
   });
 
+  it("explains GitHub API rate limits without marking the previous issue list current", async () => {
+    const {workspace}=await fixture();
+    const remote=githubResponse([{number:21,title:"Previously open"}]);
+    await connectProject("acme/sample-project",{destination:workspace,fetchImpl:remote.fetchImpl});
+    const before=await readFile(join(workspace,"sources/github/project.md"),"utf8");
+    const limited:typeof fetch=async()=>new Response("rate limited",{
+      status:403,
+      headers:{"x-ratelimit-remaining":"0","x-ratelimit-reset":"4102444800"},
+    });
+    await expect(refreshProject(join(workspace,"project.json"),{fetchImpl:limited,force:true}))
+      .rejects.toThrow(/GitHub API rate limit.*2100-01-01.*GH_TOKEN.*current/i);
+    expect(await readFile(join(workspace,"sources/github/project.md"),"utf8")).toBe(before);
+    const denied:typeof fetch=async()=>new Response("forbidden",{status:403});
+    await expect(refreshProject(join(workspace,"project.json"),{fetchImpl:denied,force:true}))
+      .rejects.toThrow(/GitHub API access denied.*GH_TOKEN.*current/i);
+  });
   it("skips symlinks and hidden documents and never writes to the selected repository",async()=>{
     const {project,workspace,root}=await fixture();
     await mkdir(join(project,"docs"),{recursive:true});
