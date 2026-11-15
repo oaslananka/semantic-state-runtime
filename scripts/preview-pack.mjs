@@ -53,6 +53,12 @@ async function packagePreview(argv) {
 
   // Reject ambiguous versions before any package output is staged.
   const releaseTag = npmDistTag(nodeApp.version);
+  const registry = JSON.parse(await readFile(join(repository, "server.json"), "utf8"));
+  if (nodeApp.mcpName !== registry.name || registry.version !== nodeApp.version ||
+      registry.packages?.[0]?.identifier !== "semantic-state-runtime" ||
+      registry.packages?.[0]?.version !== nodeApp.version) {
+    throw new Error("MCP Registry name, package or version differs from the npm source.");
+  }
 
   pnpm(["build"]);
   await mkdir(destination);
@@ -80,9 +86,10 @@ async function packagePreview(argv) {
 
     const manifest = {
       name: "semantic-state-runtime",
+      mcpName: nodeApp.mcpName,
       version: nodeApp.version,
       private: !publishable,
-      description: "Policy-scoped semantic context for AI agents via MCP (Developer Preview)",
+      description: "Policy-authorized semantic context for AI agents through MCP",
       repository: { type: "git", url: "git+https://github.com/oaslananka/semantic-state-runtime.git" },
       homepage: "https://github.com/oaslananka/semantic-state-runtime#readme",
       bugs: { url: "https://github.com/oaslananka/semantic-state-runtime/issues" },
@@ -103,7 +110,8 @@ async function packagePreview(argv) {
       join(repository, "docs/local-node-runtime-v1.md"),
       join(destination, "docs/local-node-runtime-v1.md"),
     );
-    await writeFile(join(destination, "README.md"), "# Semantic State Runtime — Developer Preview\n\n**Not production-ready.** This first distribution is validated with synthetic data, not personal data. No hosted account or model key is required for the local MCP server.\n\n## First run (read-only synthetic data)\n\nAfter installing the package, run `ssrl-demo-init ./ssrl-example` to create a new synthetic workspace. It refuses existing directories. Configure your MCP client to launch `ssrl-node ./ssrl-example/ssrl.config.json`. Call `context.compile` with task `Project Atlas deadline`; the authorized fixture deadline is 2026-11-20.\n\nFor your own files, follow [the explicit local configuration guide](docs/local-node-runtime-v1.md). Start read-only; do not grant write scopes without reviewing source and field permissions.\n\n[Source code](https://github.com/oaslananka/semantic-state-runtime) | [MIT License](LICENSE) | [Third-party notices](THIRD_PARTY_NOTICES.txt)\n");
+    await writeFile(join(destination, "README.md"), "# Semantic State Runtime\n\n**Initial public npm release.** The read-only synthetic demo has automated MCP and chat-client acceptance. Independent human onboarding and production use of real private data have not yet been verified.\n\n## First run\n\nAfter `npm install -g semantic-state-runtime`, run `ssrl-demo-init ./ssrl-example`.\nThe initializer refuses existing directories and creates:\n- `ssrl.config.json` with read-only synthetic Project Atlas data\n- `opencode.json` ready when you open the generated directory with OpenCode\n- `copilot.mcp-config.json` for merging the `ssrl` entry into your Copilot Global configuration (do not overwrite other servers)\n\nAsk your MCP client to call `context.compile` for `Project Atlas deadline`, expecting `2026-11-20`.\n\nThe MCP server itself needs no hosted account or API key; any chat model credentials belong to your own client. For your own data, read [the explicit configuration guide](docs/local-node-runtime-v1.md) before granting file or write permissions.\n\n[Source code](https://github.com/oaslananka/semantic-state-runtime) | [MIT License](LICENSE) | [Third-party notices](THIRD_PARTY_NOTICES.txt)\n");
+
     command(process.execPath, [join(destination, "dist/cli.js"), "--help"], destination);
     console.log((publishable ? "Unpublished public npm release candidate ready: " : "Private npm preview ready: ") + destination);
     console.log(publishable ? "Publish only from the matching GitHub Release via trusted GitHub Actions OIDC." : "Run npm pack from this directory; do not publish this preview.");

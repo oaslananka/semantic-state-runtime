@@ -44,13 +44,21 @@ ssrl-node --version
 ~~~
 
 The initializer creates a **new** folder and refuses to overwrite one.
-It provides a generated configuration at `./ssrl-example/ssrl.config.json`
-that reads synthetic Markdown only, with **no write permissions**.
-Point your MCP-capable chat client's **stdio server command** at `ssrl-node`
-and pass the **absolute path** to that config file as its argument.
-Then call `context.compile` for `Project Atlas deadline`; the authorized
-synthetic result contains **2026-11-20**. Your client may require a
-separate model account, but the MCP server itself does not.
+It writes read-only synthetic Markdown and **ready-to-use client definitions**:
+
+- **OpenCode:** open `./ssrl-example` as the working directory; the generated
+  `opencode.json` uses the installed server's absolute paths.
+- **VS Code Copilot:** in Copilot, choose **Chat: Open Customizations → MCP
+  Servers → Copilot Global**. Copy the `ssrl` entry from
+  `./ssrl-example/copilot.mcp-config.json` into your existing global
+  `mcp-config.json` (merge; do not replace other configured servers).
+
+The underlying `ssrl.config.json` limits access to synthetic records and
+**does not grant writes**. Ask the client to call `context.compile` for
+`Project Atlas deadline`; the authorized response contains **2026-11-20**.
+A model account may be needed by your chat client, not by SSRL itself.
+Client definitions are generated inside the demo folder; your global
+configuration is never modified.
 
 Use the explicit [configuration guide](docs/local-node-runtime-v1.md)
 before authorizing access to real files. Windows and Linux registry installs
@@ -87,8 +95,9 @@ source-based Windows installation cannot safely be moved afterward. The
 Maintainers can still build a **private local npm tarball** using
 `pnpm preview:pack -- <new-staging-directory>` and verify it with
 `pnpm test:preview-pack`. **npm 0.1.0** is publicly available with GitHub
-release provenance; **MCP Registry listing and independently accepted
-consumer production support are not yet available**.
+release provenance. **The Registry listing must be verified separately**
+against the official MCP Registry API; independent consumer acceptance
+has not yet been established.
 
 When running a local source build instead, after creating
 an explicit configuration file using the
@@ -139,8 +148,9 @@ See [OpenCode and Goose examples](examples/README.md) and the separate
 - **Ready to try:** public npm `0.1.0` release (`latest`),
   read-only synthetic first-run, local build, deterministic demo, stdio MCP
   integration and regression tests.
-- **Not yet delivered:** independently validated human onboarding,
-  MCP Registry distribution, or a fully supported consumer product.
+- **Not yet delivered:** independently validated human onboarding or
+  a fully supported consumer product. Registry discoverability is verified
+  separately through the official public API after publication.
 - **License:** [MIT](LICENSE), copyright (c) 2026 Osman Aslan. Reuse and
   distribution are permitted under the license's notice requirements.
 - **Participation:** read [Contributing](CONTRIBUTING.md) and

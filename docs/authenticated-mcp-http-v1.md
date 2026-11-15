@@ -19,14 +19,14 @@ A valid bearer token is never sufficient authorization by itself.
 
 ## SDK baseline
 
-The repository is pinned to the MCP TypeScript SDK v2.1.0 line:
+The repository uses the official MCP TypeScript SDK **2.4.0**:
 
 ```text
-@modelcontextprotocol/server 2.1.0
-@modelcontextprotocol/client 2.1.0 (tests)
+@modelcontextprotocol/server 2.4.0
+@modelcontextprotocol/client 2.4.0 (tests)
 ```
 
-This is important because v2.1.0 adds request-time OAuth scope challenges and hardens modern HTTP request limits while continuing the 2026-07-28 stateless request model.
+MCP SDK 2.1.0 originally introduced the request-time OAuth scope challenges used by this adapter; upgrading to 2.4.0 preserves those security gates and the 2026-07-28 stateless request model. The supported subset remains covered by HTTP transport and authorization tests; optional SDK extensions are not enabled automatically.
 
 The repository's supply-chain lockfile policy is not bypassed.
 
