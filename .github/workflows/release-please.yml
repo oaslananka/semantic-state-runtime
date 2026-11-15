@@ -29,6 +29,25 @@ jobs:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
 
+      # GITHUB_TOKEN-created PRs do not produce ordinary push CI runs.
+      # workflow_dispatch is exempt from this suppression and runs on the PR head.
+      - name: Run required CI for the Release Please PR
+        if: ${{ steps.release.outputs.prs_created == 'true' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_PR_JSON: ${{ steps.release.outputs.pr }}
+        run: |
+          set -euo pipefail
+          branch="$(node --input-type=module -e '
+            const pr = JSON.parse(process.env.RELEASE_PR_JSON);
+            const name = pr?.headBranchName;
+            if (typeof name !== "string" || !name.startsWith("release-please--branches--main--")) {
+              throw new Error("Unexpected Release Please branch name");
+            }
+            process.stdout.write(name);
+          ')"
+          gh workflow run ci.yml --repo "$GITHUB_REPOSITORY" --ref "$branch"
+
       - name: Dispatch npm for the new GitHub Release
         if: ${{ steps.release.outputs.release_created == 'true' }}
         env:
