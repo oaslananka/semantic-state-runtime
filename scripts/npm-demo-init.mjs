@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { lstat, mkdir, rm, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 
 const entityId = "entity://project/atlas";
 
@@ -82,9 +83,33 @@ async function main(args) {
       join(destination, "ssrl.config.json"),
       JSON.stringify(exampleConfig(), null, 2) + "\n",
     );
+    const configPath = join(destination, "ssrl.config.json");
+    // These launch the exact locally installed npm package, without PATH or
+    // shared-user configuration changes. Only synthetic read-only data is used.
+    const command = [
+      process.execPath,
+      fileURLToPath(new URL("../dist/cli.js", import.meta.url)),
+      configPath,
+    ];
+    await writeFile(join(destination, "opencode.json"), JSON.stringify({
+      $schema: "https://opencode.ai/config.json",
+      mcp: { servers: { ssrl: { type: "local", command, cwd: destination } } },
+      permissions: [
+        { action: "*", resource: "*", effect: "deny" },
+        { action: "ssrl_context_compile", resource: "*", effect: "allow" },
+      ],
+    }, null, 2) + "\n");
+    await writeFile(join(destination, "copilot.mcp-config.json"), JSON.stringify({
+      mcpServers: { ssrl: { command: command[0], args: command.slice(1) } },
+    }, null, 2) + "\n");
     console.log("Synthetic read-only workspace created: " + destination);
     console.log("Connect an MCP stdio client to: ssrl-node " +
       JSON.stringify(join(destination, "ssrl.config.json")));
+    console.log("OpenCode: open the generated directory and launch OpenCode there; opencode.json is ready.");
+    console.log("VS Code Copilot: in Chat > Open Customizations > MCP Servers, copy the ssrl entry from:");
+    console.log("  " + join(destination, "copilot.mcp-config.json"));
+    console.log("Add it to your own Copilot Global config (do not replace existing servers).");
+    console.log("Ask the client to call context.compile for Project Atlas deadline.");
     console.log("This demo does not access your existing files or enable writes.");
   } catch (error) {
     await rm(destination, { recursive: true, force: true });

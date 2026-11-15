@@ -1,6 +1,6 @@
 # Install Semantic State Runtime (v0.1.0)
 
-**Status:** `semantic-state-runtime@0.1.0` is the first non-prerelease SemVer version, published on npm as `latest` and tagged as GitHub `v0.1.0` with signed provenance. This is **not** a fully supported consumer product, an MCP Registry listing, or a hosted service.
+**Status:** `semantic-state-runtime@0.1.0` is the first non-prerelease SemVer version, published on npm as `latest` and tagged as GitHub `v0.1.0` with signed provenance. This is **not** a fully supported consumer product or a hosted service. Official MCP Registry publication is a separately verified process.
 
 ## Install from npm (recommended first run)
 
@@ -10,6 +10,10 @@ Requirements: Node.js 24.12+ and npm. No source clone or API key is necessary fo
 npm install -g semantic-state-runtime
 ssrl-demo-init ./ssrl-example
 ssrl-node --version
+
+# Open the new ./ssrl-example directory in OpenCode to use its opencode.json.
+# For Copilot Global, merge the ssrl entry from
+# ./ssrl-example/copilot.mcp-config.json (do not overwrite other servers).
 ~~~
 
 The initializer creates a new synthetic **read-only** workspace with `./ssrl-example/ssrl.config.json`; it refuses an existing destination and does not search personal files. Configure your MCP client to launch `ssrl-node` with the **absolute path** of this config file. Request `context.compile` for `Project Atlas deadline`; the authorized example yields `2026-11-20`.
@@ -81,7 +85,7 @@ The generated directory contains a bundled stdio CLI, MIT license, and the local
 
 The source repository's `pnpm test:preview-pack` runs `npm pack`, installs the resulting tarball **offline into a different directory**, and checks `--help`, `--version`, and real policy-scoped MCP stdio tool calls. This test must pass on the exact PR head before any public distribution is considered.
 
-The released package name and cross-platform synthetic installation were verified against the public npm registry. An independent human first-run and an MCP Registry listing are still outstanding; this does not establish production-readiness or independently accepted consumer support.
+The released package name and cross-platform synthetic installation were verified against the public npm registry. An independent human first-run remains outstanding, and MCP Registry discoverability must be checked against the official Registry API; this does not establish production-readiness or independently accepted consumer support.
 
 ## Public npm release packaging (maintainers)
 
@@ -99,7 +103,7 @@ The commands above **do not publish** another registry package. Actual publicati
 
 ### First user experience
 
-After installing `semantic-state-runtime@0.1.0`, run `ssrl-demo-init ./ssrl-example` to create a **new**, synthetic, read-only directory; this refuses overwrites and never scans existing user files. Connect an MCP stdio client with `ssrl-node ./ssrl-example/ssrl.config.json` and ask it to call `context.compile` with task `Project Atlas deadline`. The response should contain the authorized sample date `2026-11-20` without private data. For personal projects, review the detailed configuration guide before mapping any real files or enabling writes.
+After installing the latest stable package, run `ssrl-demo-init ./ssrl-example` to create a **new**, synthetic, read-only directory; this refuses overwrites and never scans existing user files. The generated `opencode.json` can be used by running OpenCode from that folder. For VS Code Copilot, **Chat: Open Customizations → MCP Servers → Copilot Global** lets you merge the generated `copilot.mcp-config.json` `ssrl` entry into your existing configuration without overwriting other servers. Both definitions launch the installed `ssrl-node` with the **absolute** `ssrl.config.json` path. Ask the model to call `context.compile` with task `Project Atlas deadline` and expect `2026-11-20`. For personal projects, review the detailed configuration guide before mapping any real files or enabling writes.
 
 Release history: the manual `0.1.0-beta.1` did not establish provenance, while both `0.1.0-beta.2` and the GitHub `v0.1.0` npm release were published via GitHub OIDC with signed provenance. The public `0.1.0` tarball has been independently downloaded and exercised on Windows and Linux, but an independently human-validated consumer product has not been established.
 
@@ -145,3 +149,11 @@ synthetic MCP `context.compile` path for each release.
 may require explicit handling for CI on Release Please-created PRs and
 events generated with that token. Do not merge a release PR without the
 required checks actually passing on its exact head.
+
+## Official MCP Registry publication
+
+The source includes `server.json` for `io.github.oaslananka/semantic-state-runtime`; the packager copies the matching `mcpName` into each newly published npm release. Registry ownership verification requires that field in the **actual published npm artifact**, not merely the private workspace manifest. The Registry package arguments require a user-provided `ssrl.config.json` path. Running `ssrl-demo-init` first is the safest read-only setup.
+
+The separate `Publish to MCP Registry` GitHub Actions workflow runs only after a successful npm publish (or a deliberate manual dispatch), verifies the exact GitHub Release/tag, checks npm's immutable published metadata, downloads a signed and pinned official `mcp-publisher`, and authenticates via GitHub OIDC. It is intentionally separate from npm publishing: a Registry outage cannot require republishing the same npm version. Publication is complete **only after** the official Registry API reports the same version, not when `server.json` exists in the repository.
+
+The MCP Registry is in preview and its listing can change. Independent human first-use acceptance and real personal-data production safety remain separate gates.

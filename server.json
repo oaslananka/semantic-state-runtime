@@ -1,0 +1,32 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.oaslananka/semantic-state-runtime",
+  "title": "Semantic State Runtime",
+  "description": "Local MCP server for policy-authorized semantic context and source-authority reconciliation.",
+  "repository": {
+    "url": "https://github.com/oaslananka/semantic-state-runtime",
+    "source": "github"
+  },
+  "websiteUrl": "https://github.com/oaslananka/semantic-state-runtime#install-from-npm",
+  "version": "0.1.0",
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "semantic-state-runtime",
+      "version": "0.1.0",
+      "transport": {
+        "type": "stdio"
+      },
+      "packageArguments": [
+        {
+          "type": "positional",
+          "format": "filepath",
+          "isRequired": true,
+          "description": "Absolute path to ssrl.config.json. Create a synthetic read-only configuration first with: ssrl-demo-init ./ssrl-example",
+          "placeholder": "./ssrl-example/ssrl.config.json",
+          "valueHint": "configPath"
+        }
+      ]
+    }
+  ]
+}

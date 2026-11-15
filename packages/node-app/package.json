@@ -1,28 +1,29 @@
 {
   "name": "@ssrl/node-app",
+  "mcpName": "io.github.oaslananka/semantic-state-runtime",
   "version": "0.1.0",
   "private": true,
   "type": "module",
   "dependencies": {
+    "@modelcontextprotocol/server": "2.4.0",
+    "@ssrl/artifact-access": "workspace:*",
     "@ssrl/connector-markdown-fs": "workspace:*",
     "@ssrl/connector-sdk": "workspace:*",
+    "@ssrl/context-access": "workspace:*",
     "@ssrl/core": "workspace:*",
+    "@ssrl/ingestion": "workspace:*",
+    "@ssrl/materializer": "workspace:*",
     "@ssrl/mcp-server": "workspace:*",
     "@ssrl/runtime": "workspace:*",
     "@ssrl/runtime-host": "workspace:*",
-    "@ssrl/storage-sqlite": "workspace:*",
-    "zod": "4.6.7",
-    "@modelcontextprotocol/server": "2.3.1",
-    "@ssrl/context-access": "workspace:*",
-    "@ssrl/ingestion": "workspace:*",
-    "@ssrl/materializer": "workspace:*",
-    "@ssrl/storage-local-artifacts": "workspace:*",
     "@ssrl/state-store": "workspace:*",
-    "@ssrl/artifact-access": "workspace:*",
-    "@ssrl/storage-sqlite-capsules": "workspace:*"
+    "@ssrl/storage-local-artifacts": "workspace:*",
+    "@ssrl/storage-sqlite": "workspace:*",
+    "@ssrl/storage-sqlite-capsules": "workspace:*",
+    "zod": "4.6.7"
   },
   "devDependencies": {
-    "@modelcontextprotocol/client": "2.3.0",
+    "@modelcontextprotocol/client": "2.4.0",
     "@types/node": "26.6.5"
   },
   "bin": {

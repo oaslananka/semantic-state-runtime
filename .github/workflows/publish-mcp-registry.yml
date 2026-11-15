@@ -1,0 +1,132 @@
+name: Publish to MCP Registry
+
+on:
+  workflow_run:
+    workflows: ["Publish npm Release"]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Exact published npm and GitHub Release version
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mcp-registry-publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: >-
+      github.repository == 'oaslananka/semantic-state-runtime' &&
+      ((github.event_name == 'workflow_run' &&
+        github.event.workflow_run.conclusion == 'success' &&
+        github.event.workflow_run.head_branch == 'main' &&
+        github.event.workflow_run.head_repository.full_name == 'oaslananka/semantic-state-runtime' &&
+        github.event.workflow_run.event == 'workflow_dispatch') ||
+       (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      MCP_PUBLISHER_VERSION: v1.8.1
+    steps:
+      - name: Checkout exact npm source
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+          persist-credentials: false
+
+      - name: Verify GitHub Release, npm identity and exact version
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REQUESTED_VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import { readFileSync, appendFileSync } from 'node:fs';
+          const root = JSON.parse(readFileSync('package.json', 'utf8'));
+          const npm = JSON.parse(readFileSync('packages/node-app/package.json', 'utf8'));
+          const registry = JSON.parse(readFileSync('server.json', 'utf8'));
+          const version = root.version;
+          if (process.env.REQUESTED_VERSION && process.env.REQUESTED_VERSION !== version) {
+            throw new Error('Requested version differs from source HEAD');
+          }
+          if (npm.version !== version || registry.version !== version ||
+              registry.packages?.[0]?.version !== version ||
+              npm.mcpName !== registry.name ||
+              registry.packages?.[0]?.identifier !== 'semantic-state-runtime') {
+            throw new Error('Registry metadata, npm package and GitHub Release versions must match');
+          }
+          appendFileSync(process.env.GITHUB_ENV, 'RELEASE_VERSION=' + version + '\n');
+          NODE
+          tag="v$RELEASE_VERSION"
+          git fetch --no-tags origin "refs/tags/$tag:refs/tags/$tag"
+          test "$(git rev-list -n 1 "$tag")" = "$(git rev-parse HEAD)" || {
+            echo "::error::Release tag does not identify the checked out source"; exit 1;
+          }
+          gh release view "$tag" --repo "$GITHUB_REPOSITORY" --json isDraft,isPrerelease \
+            --jq 'select(.isDraft == false and .isPrerelease == false) | .isDraft' | grep -Fx false
+
+          # The npm artifact is immutable but registry visibility is eventually consistent.
+          for n in 1 2 3 4 5 6; do
+            published_version="$(npm view "semantic-state-runtime@$RELEASE_VERSION" version --json --registry=https://registry.npmjs.org/ 2>/dev/null | tr -d '"')" || :
+            published_name="$(npm view "semantic-state-runtime@$RELEASE_VERSION" mcpName --json --registry=https://registry.npmjs.org/ 2>/dev/null | tr -d '"')" || :
+            if [ "$published_version" = "$RELEASE_VERSION" ] && [ "$published_name" = "io.github.oaslananka/semantic-state-runtime" ]; then
+              break
+            fi
+            if [ "$n" -eq 6 ]; then
+              echo "::error::Matching npm package or mcpName cannot be verified"
+              exit 1
+            fi
+            sleep 12
+          done
+
+      - name: Install official cosign verifier
+        uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
+
+      - name: Verify and unpack official mcp-publisher
+        run: |
+          set -euo pipefail
+          archive=mcp-publisher_linux_amd64.tar.gz
+          url="https://github.com/modelcontextprotocol/registry/releases/download/${MCP_PUBLISHER_VERSION}"
+          curl --fail --location --silent --show-error --output "$archive" "$url/$archive"
+          curl --fail --location --silent --show-error --output "$archive.sigstore.json" "$url/$archive.sigstore.json"
+          cosign verify-blob --bundle "$archive.sigstore.json" \
+            --certificate-identity "https://github.com/modelcontextprotocol/registry/.github/workflows/release.yml@refs/tags/${MCP_PUBLISHER_VERSION}" \
+            --certificate-oidc-issuer "https://token.actions.githubusercontent.com" "$archive"
+          tar xzf "$archive" mcp-publisher
+          rm -f "$archive" "$archive.sigstore.json"
+
+      - name: Validate MCP Registry metadata
+        run: ./mcp-publisher validate
+
+      - name: Authenticate and publish through GitHub OIDC
+        run: |
+          ./mcp-publisher login github-oidc
+          ./mcp-publisher publish
+
+      - name: Verify public Registry listing
+        run: |
+          set -euo pipefail
+          for n in 1 2 3 4 5 6; do
+            payload="$(curl --fail --silent --show-error --get \
+              --data-urlencode 'search=io.github.oaslananka/semantic-state-runtime' \
+              'https://registry.modelcontextprotocol.io/v0.1/servers')"
+            if jq -e --arg v "$RELEASE_VERSION" \
+              '.servers[]? | select(.server.name == "io.github.oaslananka/semantic-state-runtime" and .server.version == $v)' \
+              <<<"$payload" >/dev/null; then
+              echo "Official Registry version $RELEASE_VERSION confirmed"
+              exit 0
+            fi
+            if [ "$n" -eq 6 ]; then
+              echo "::error::Registry listing could not be verified"
+              exit 1
+            fi
+            sleep 12
+          done

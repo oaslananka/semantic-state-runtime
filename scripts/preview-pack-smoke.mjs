@@ -3,7 +3,7 @@ import { spawnSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import { mkdir, mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { dirname, join } from "node:path";
+import { dirname, isAbsolute, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { npmDistTag } from "./release-version.mjs";
 
@@ -79,7 +79,7 @@ try {
   assert.equal(installedManifest.license, "MIT");
   assert.equal(installedManifest.version, manifest.version);
   assert.match(await readFile(join(installed, "LICENSE"), "utf8"), /^MIT License/);
-  assert.match(await readFile(join(installed, "README.md"), "utf8"), /Developer Preview/);
+  assert.match(await readFile(join(installed, "README.md"), "utf8"), /Initial public npm release/);
   const cli = join(installed, "dist/cli.js");
   runNode([cli, "--help"], { cwd: consumer });
   runNode([cli, "--version"], { cwd: consumer });
@@ -95,6 +95,15 @@ try {
   assert.equal(releaseManifest.private, false);
   assert.equal(releaseManifest.version, manifest.version);
   assert.equal(releaseManifest.name, "semantic-state-runtime");
+  const registry = JSON.parse(await readFile(join(repository, "server.json"), "utf8"));
+  assert.equal(registry.name, "io.github.oaslananka/semantic-state-runtime");
+  assert.equal(registry.version, releaseManifest.version);
+  assert.equal(registry.packages[0].version, releaseManifest.version);
+  assert.equal(registry.packages[0].identifier, releaseManifest.name);
+  assert.equal(registry.packages[0].packageArguments[0].type, "positional");
+  assert.equal(registry.packages[0].packageArguments[0].valueHint, "configPath");
+  assert.equal(registry.packages[0].packageArguments[0].isRequired, true);
+  assert.equal(releaseManifest.mcpName, registry.name);
   assert.equal(releaseManifest.license, "MIT");
   assert.equal(releaseManifest.publishConfig.tag, npmDistTag(releaseManifest.version));
   assert.match(releaseManifest.repository.url, /github\.com\/oaslananka\/semantic-state-runtime/);
@@ -117,6 +126,26 @@ try {
   const demoConfig = JSON.parse(await readFile(join(example, "ssrl.config.json"), "utf8"));
   assert.deepEqual(demoConfig.principal.scopes, ["state:read", "context:read"]);
   assert.deepEqual(demoConfig.policy.operations, { plan: false, apply: false });
+  const opencode = JSON.parse(await readFile(join(example, "opencode.json"), "utf8"));
+  const copilot = JSON.parse(await readFile(join(example, "copilot.mcp-config.json"), "utf8"));
+  const local = opencode.mcp?.servers?.ssrl;
+  const portable = copilot.mcpServers?.ssrl;
+  assert.equal(local?.type, "local");
+  assert.deepEqual(opencode.permissions, [
+    { action: "*", resource: "*", effect: "deny" },
+    { action: "ssrl_context_compile", resource: "*", effect: "allow" },
+  ]);
+  assert.equal(local?.command?.[0], process.execPath);
+  assert.equal(local?.command?.[1], entry);
+  assert.equal(local?.command?.[2], join(example, "ssrl.config.json"));
+  assert.ok(local.command.every(isAbsolute), "OpenCode command and paths must be absolute");
+  assert.equal(portable?.command, process.execPath);
+  assert.deepEqual(portable?.args, local.command.slice(1));
+  assert.deepEqual(copilot.mcpServers.ssrl.env ?? {}, {});
+  assert.deepEqual(demoConfig.principal.scopes, ["state:read", "context:read"]);
+  const rerun = spawnSync(process.execPath, [demoInit, example], { encoding: "utf8", cwd: releaseConsumer });
+  assert.notEqual(rerun.status, 0, "A second setup must not overwrite the workspace");
+  assert.match(rerun.stderr, /already exists/);
   runNode([join(repository, "packages/node-app/scripts/installed-demo-smoke.mjs")], {
     cwd: releaseConsumer,
     env: { SSRL_TEST_CLI_PATH: entry, SSRL_TEST_CONFIG_PATH: join(example, "ssrl.config.json") },

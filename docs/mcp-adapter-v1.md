@@ -4,7 +4,7 @@
 
 ## Dependency posture
 
-The adapter is pinned to `@modelcontextprotocol/server@2.1.0` and uses `@modelcontextprotocol/client@2.1.0` in integration tests. The upgrade was made before building remote HTTP because 2.1.0 adds request-time OAuth scope challenges and modern HTTP hardening needed by the authenticated transport boundary.
+The adapter uses `@modelcontextprotocol/server@2.4.0` and `@modelcontextprotocol/client@2.4.0` in integration tests. MCP SDK 2.1.0 originally introduced request-time OAuth scope challenges and modern HTTP hardening used by the authenticated transport boundary. This subsequent compatible upgrade retains those requirements; experimental Skills, Tasks, and MCP Apps are not enabled by default.
 
 The repository supply-chain lockfile policy remains enabled; it was not bypassed.
 
