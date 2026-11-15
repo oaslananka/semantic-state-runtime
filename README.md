@@ -7,9 +7,11 @@
   <a href="https://gitgem.org/github/oaslananka/semantic-state-runtime"><img alt="GitGem" src="https://gitgem.org/api/badge/github/oaslananka/semantic-state-runtime.svg"></a>
 </p>
 
-**Durable, authoritative context for AI agents — accessible through MCP.**
+**Switch AI coding agents without losing the current project facts.**
 
-> **Status: v0.2.0 — public npm MCP release.** The MCP runtime is usable
+Connect one public GitHub repository or selected local folder, then ask your MCP-capable AI agent for the open issues and relevant decisions. SSRL keeps a bounded, read-only project view updated on demand and applies explicit source authority instead of trusting stale local notes.
+
+> **Status: public npm MCP release (current version in the npm badge).** The MCP runtime is usable
 > with synthetic data, but independent human onboarding and production use are
 > not yet validated. No hosted service or model account is included.
 
@@ -31,6 +33,21 @@ assistant guess, SSRL can:
 
 This is **state reconciliation and access-controlled context**, not simply
 chat-history memory, an unrestricted file search, or an LLM provider.
+
+## Connect your first real project
+
+~~~bash
+npm install -g semantic-state-runtime
+ssrl-connect https://github.com/oaslananka/semantic-state-runtime
+cd ssrl-semantic-state-runtime
+opencode
+~~~
+
+Ask: **"Use SSRL context.compile for oaslananka/semantic-state-runtime. Which GitHub issues are currently open? Show issue numbers and sources."** The generated OpenCode configuration is ready; Antigravity's workspace-local .agents/mcp_config.json and a separate Copilot MCP entry are included.
+
+Alternatively, connect a local folder once using `ssrl-connect ./my-project --out ./my-project-ssrl`. It discovers the project's GitHub origin when present, or accepts `--local-only`. Existing files are never modified; only selected Markdown, and GitHub open issue/PR metadata when connected, are ingested. The bounded refresh runs when context is requested, not through a background service. **This is not an automatic history of every chat or file.**
+
+See [the one-command project connection guide](docs/connect-project.md) for exact limits, private GitHub access, refresh timing, source authority and reproducible acceptance evidence.
 
 ## Install from npm
 
@@ -94,7 +111,7 @@ source-based Windows installation cannot safely be moved afterward. The
 
 Maintainers can still build a **private local npm tarball** using
 `pnpm preview:pack -- <new-staging-directory>` and verify it with
-`pnpm test:preview-pack`. **npm 0.1.0** is publicly available with GitHub
+`pnpm test:preview-pack`. **The stable npm package** is publicly available with GitHub
 release provenance. **The Registry listing must be verified separately**
 against the official MCP Registry API; independent consumer acceptance
 has not yet been established.
@@ -145,7 +162,7 @@ See [OpenCode and Goose examples](examples/README.md) and the separate
 
 ## Project status
 
-- **Ready to try:** public npm `0.1.0` release (`latest`),
+- **Ready to try:** public npm stable release (`latest`),
   read-only synthetic first-run, local build, deterministic demo, stdio MCP
   integration and regression tests.
 - **Not yet delivered:** independently validated human onboarding or
@@ -214,7 +231,7 @@ See `docs/invariants.md` and the versioned design documents under `docs/`.
 
 ## Near-term gaps
 
-The runtime has a public 0.1.0 release, but is not yet a fully supported consumer product. Important remaining work includes:
+The runtime has a public stable release and a one-command read-only project connector, but independent novice-user onboarding and private-data production readiness remain unverified. Important remaining work includes:
 
 - more source connectors and semantic mappings;
 - historical context-access semantics;

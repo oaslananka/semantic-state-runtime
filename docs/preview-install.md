@@ -1,6 +1,6 @@
-# Install Semantic State Runtime (v0.1.0)
+# Install Semantic State Runtime (stable npm release)
 
-**Status:** `semantic-state-runtime@0.2.0` is the current public stable SemVer package, released as GitHub `v0.2.0` through npm Trusted Publisher OIDC with signed provenance. The initial stable release was `0.1.0`. This is **not** a fully supported consumer product or a hosted service. Official MCP Registry publication is a separately verified process.
+**Status:** `semantic-state-runtime@latest` is the current public stable package, published through npm Trusted Publisher OIDC with signed provenance. The first stable release was `0.1.0`, followed by `0.2.0` with verified MCP Registry publication. This is **not** a fully supported consumer product or a hosted service. Official MCP Registry publication is a separately verified process.
 
 ## Install from npm (recommended first run)
 

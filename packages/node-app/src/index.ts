@@ -155,6 +155,7 @@ export interface LocalRuntimeApp {
 
 export async function createLocalRuntimeApp(
   config: LocalAppConfig,
+  options: { readonly sourceRefresh?: () => Promise<void> } = {},
 ): Promise<LocalRuntimeApp> {
   await assertProviderRoots(config);
 
@@ -187,7 +188,7 @@ export async function createLocalRuntimeApp(
   const journal = new SQLiteEventJournal({ path: config.journalPath });
   let contextRuntime: Awaited<ReturnType<typeof createLocalContextRuntime>>;
   try {
-    contextRuntime = await createLocalContextRuntime(config);
+    contextRuntime = await createLocalContextRuntime(config, undefined, undefined, options.sourceRefresh);
   } catch (cause) {
     journal.close();
     throw cause;
@@ -235,12 +236,13 @@ export async function createLocalRuntimeApp(
 
 export async function loadAndCreateLocalRuntimeApp(
   configPath: string,
+  options: { readonly sourceRefresh?: () => Promise<void> } = {},
 ): Promise<{
   readonly app: LocalRuntimeApp;
   readonly warnings: readonly string[];
 }> {
   const loaded = await loadLocalAppConfig(configPath);
-  const app = await createLocalRuntimeApp(loaded.config);
+  const app = await createLocalRuntimeApp(loaded.config, options);
   return {
     app,
     warnings: loaded.warnings,

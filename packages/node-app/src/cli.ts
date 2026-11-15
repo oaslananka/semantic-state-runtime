@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 import { readFile } from "node:fs/promises";
+import { dirname, join, resolve } from "node:path";
+import { refreshProject } from "./project-connect.js";
 import { serveStdio } from "@modelcontextprotocol/server/stdio";
 import {
   InvalidLocalAppConfigError,
@@ -23,6 +25,7 @@ async function main(argv: readonly string[]): Promise<void> {
   if (argv.length === 1 && (argv[0] === "--help" || argv[0] === "-h")) {
     console.log([
       "Usage: ssrl-node <config.json>",
+      "       ssrl-node --project <project.json>",
       "       ssrl-node --help",
       "       ssrl-node --version",
       "",
@@ -41,15 +44,24 @@ async function main(argv: readonly string[]): Promise<void> {
     return;
   }
 
-  if (argv.length !== 1 || argv[0]?.startsWith("-")) {
-    console.error("Usage: ssrl-node <config.json>");
+  const connected = argv.length === 2 && argv[0] === "--project";
+  if (!connected && (argv.length !== 1 || argv[0]?.startsWith("-"))) {
+    console.error("Usage: ssrl-node <config.json> | --project <project.json>");
     process.exitCode = 2;
     return;
   }
 
   let loaded: Awaited<ReturnType<typeof loadAndCreateLocalRuntimeApp>>;
   try {
-    loaded = await loadAndCreateLocalRuntimeApp(argv[0]!);
+    if (connected) {
+      const projectFile = resolve(argv[1]!);
+      await refreshProject(projectFile);
+      loaded = await loadAndCreateLocalRuntimeApp(join(dirname(projectFile), "ssrl.config.json"), {
+        sourceRefresh: () => refreshProject(projectFile),
+      });
+    } else {
+      loaded = await loadAndCreateLocalRuntimeApp(argv[0]!);
+    }
   } catch (error) {
     for (const line of startupError(error)) console.error(line);
     process.exitCode = 1;
