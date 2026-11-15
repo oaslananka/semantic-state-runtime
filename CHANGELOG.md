@@ -18,10 +18,6 @@
 
 * Project-authored source is now distributed under GPL-3.0-only. Previously published versions retain their original license terms; see [LICENSING.md](LICENSING.md).
 
-### Onboarding
-
-* Public GitHub connections can recover from anonymous API quota exhaustion through an already-authenticated local GitHub CLI. SSRL does not extract, log or save CLI tokens, and unrelated access-denied requests still fail closed.
-
 ### Bug Fixes
 
 * explain GitHub API access failures during onboarding ([#149](https://github.com/oaslananka/semantic-state-runtime/issues/149)) ([3c70612](https://github.com/oaslananka/semantic-state-runtime/commit/3c706126b89b455d4af59852ca28a33e82a738eb))
