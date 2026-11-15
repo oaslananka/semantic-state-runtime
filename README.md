@@ -2,15 +2,16 @@
 
 <p align="center">
   <a href="https://github.com/oaslananka/semantic-state-runtime/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/oaslananka/semantic-state-runtime/actions/workflows/ci.yml/badge.svg"></a>
-  <a href="https://www.npmjs.com/package/semantic-state-runtime"><img alt="npm preview" src="https://img.shields.io/npm/v/semantic-state-runtime/next.svg?label=npm%20next"></a>
+  <a href="https://www.npmjs.com/package/semantic-state-runtime"><img alt="npm release" src="https://img.shields.io/npm/v/semantic-state-runtime.svg"></a>
   <a href="LICENSE"><img alt="MIT License" src="https://img.shields.io/badge/license-MIT-blue.svg"></a>
   <a href="https://gitgem.org/github/oaslananka/semantic-state-runtime"><img alt="GitGem" src="https://gitgem.org/api/badge/github/oaslananka/semantic-state-runtime.svg"></a>
 </p>
 
 **Durable, authoritative context for AI agents — accessible through MCP.**
 
-> **Status: Developer Preview.** This is a working engineering runtime and MCP
-> server with a public [npm Developer Preview](https://www.npmjs.com/package/semantic-state-runtime) (`next` dist-tag), **not** a supported consumer app, stable release, or hosted service.
+> **Status: v0.1.0 — initial public npm release.** The MCP runtime is usable
+> with synthetic data, but independent human onboarding and production use are
+> not yet validated. No hosted service or model account is included.
 
 Semantic State Runtime (SSRL) helps AI agents use the **right information**
 when several sources disagree. It reconciles writable state against explicit
@@ -31,13 +32,13 @@ assistant guess, SSRL can:
 This is **state reconciliation and access-controlled context**, not simply
 chat-history memory, an unrestricted file search, or an LLM provider.
 
-## Try the npm Developer Preview
+## Install from npm
 
 Requirements: **Node.js 24.12+** and npm. No Git clone, workspace build,
 API key, or model account is needed to try the **synthetic read-only** MCP server.
 
 ~~~bash
-npm install -g semantic-state-runtime@next
+npm install -g semantic-state-runtime
 ssrl-demo-init ./ssrl-example
 ssrl-node --version
 ~~~
@@ -85,8 +86,9 @@ source-based Windows installation cannot safely be moved afterward. The
 
 Maintainers can still build a **private local npm tarball** using
 `pnpm preview:pack -- <new-staging-directory>` and verify it with
-`pnpm test:preview-pack`. The public prerelease is available on npm;
-**the MCP Registry listing and a stable consumer release are not available**.
+`pnpm test:preview-pack`. **npm 0.1.0** is publicly available with GitHub
+release provenance; **MCP Registry listing and independently accepted
+consumer production support are not yet available**.
 
 When running a local source build instead, after creating
 an explicit configuration file using the
@@ -134,11 +136,11 @@ See [OpenCode and Goose examples](examples/README.md) and the separate
 
 ## Project status
 
-- **Ready to try:** published npm Developer Preview (`next`),
+- **Ready to try:** public npm `0.1.0` release (`latest`),
   read-only synthetic first-run, local build, deterministic demo, stdio MCP
   integration and regression tests.
 - **Not yet delivered:** independently validated human onboarding,
-  MCP Registry distribution, or a supported stable consumer release.
+  MCP Registry distribution, or a fully supported consumer product.
 - **License:** [MIT](LICENSE), copyright (c) 2026 Osman Aslan. Reuse and
   distribution are permitted under the license's notice requirements.
 - **Participation:** read [Contributing](CONTRIBUTING.md) and
@@ -202,7 +204,7 @@ See `docs/invariants.md` and the versioned design documents under `docs/`.
 
 ## Near-term gaps
 
-The runtime is a Developer Preview, not a consumer product. Important remaining work includes:
+The runtime has a public 0.1.0 release, but is not yet a fully supported consumer product. Important remaining work includes:
 
 - more source connectors and semantic mappings;
 - historical context-access semantics;
