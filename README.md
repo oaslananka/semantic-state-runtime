@@ -3,11 +3,10 @@
 <p align="center">
   <a href="https://github.com/oaslananka/semantic-state-runtime/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/oaslananka/semantic-state-runtime/actions/workflows/ci.yml/badge.svg"></a>
   <a href="https://www.npmjs.com/package/semantic-state-runtime"><img alt="npm release" src="https://img.shields.io/npm/v/semantic-state-runtime.svg"></a>
-  <a href="LICENSE"><img alt="GPL-3.0-only license" src="https://img.shields.io/badge/license-GPL-3.0-only-blue.svg"></a>
 </p>
 
 <p align="center">
-  <a href="https://www.npmjs.com/package/semantic-state-runtime"><img src="https://img.shields.io/npm/dt/semantic-state-runtime?label=total%20downloads" alt="npm total downloads" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0--only-blue" alt="GPL-3.0-only license" /></a>
   <a href="https://gitgem.org/github/oaslananka/semantic-state-runtime"><img src="https://gitgem.org/api/badge/github/oaslananka/semantic-state-runtime.svg" alt="GitGem" /></a>
 </p>
 
