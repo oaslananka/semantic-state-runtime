@@ -44,8 +44,8 @@ async function packagePreview(argv) {
 
   const workspace = JSON.parse(await readFile(join(repository, "package.json"), "utf8"));
   const nodeApp = JSON.parse(await readFile(join(repository, "packages/node-app/package.json"), "utf8"));
-  if (workspace.private !== true || nodeApp.private !== true || workspace.license !== "MIT") {
-    throw new Error("Public packaging preflight requires private workspaces and the MIT license.");
+  if (workspace.private !== true || nodeApp.private !== true || workspace.license !== "GPL-3.0-only") {
+    throw new Error("Public packaging preflight requires private workspaces and the GPL-3.0-only license.");
   }
   if (workspace.version !== nodeApp.version) {
     throw new Error("Root release version must match the bundled MCP source version.");
@@ -106,7 +106,7 @@ async function packagePreview(argv) {
       homepage: "https://github.com/oaslananka/semantic-state-runtime#readme",
       bugs: { url: "https://github.com/oaslananka/semantic-state-runtime/issues" },
       keywords: ["mcp", "mcp-server", "ai-agents", "semantic-state", "source-authority", "sqlite"],
-      license: "MIT",
+      license: "GPL-3.0-only",
       type: "module",
       engines: { node: ">=24.12.0" },
       bin: { "ssrl-node": "dist/cli.js", "ssrl-demo-init": "bin/demo-init.mjs", "ssrl-connect": "dist/project-cli.js" },
@@ -123,7 +123,7 @@ async function packagePreview(argv) {
       join(destination, "docs/local-node-runtime-v1.md"),
     );
     await copyFile(join(repository,"docs/connect-project.md"),join(destination,"docs/connect-project.md"));
-    await writeFile(join(destination, "README.md"), "# Semantic State Runtime\n\n**Public npm MCP release.** Connect a real project once and let multiple AI coding agents request up-to-date, policy-authorized context. Independent human onboarding and private-data production readiness have not been verified.\n\n## Connect your first public GitHub project\n\n```bash\nnpm install -g semantic-state-runtime\nssrl-connect https://github.com/oaslananka/semantic-state-runtime\ncd ssrl-semantic-state-runtime\nopencode\n```\n\nAsk OpenCode: **Use SSRL context.compile for oaslananka/semantic-state-runtime. Which GitHub issues are open? Include issue numbers and source links.**\n\nThe command creates a new, read-only workspace with ready-to-use opencode.json, Antigravity .agents/mcp_config.json and copilot.mcp-config.json. Existing repository files and global client settings are untouched. GitHub metadata and selected Markdown are refreshed on demand; there is no background daemon or paid SSRL service.\n\nFor a local project use `ssrl-connect ./my-project --out ./my-project-ssrl`. For immediate GitHub refresh, use `ssrl-connect --refresh ./ssrl-semantic-state-runtime`. [See detailed instructions, source limits and evidence](docs/connect-project.md).\n\n## Synthetic read-only demo\n\nRun `ssrl-demo-init ./ssrl-example` to create an isolated example with a synthetic Project Atlas deadline of **2026-11-20**. The demo never scans your existing files, does not enable writes, and refuses existing output folders.\n\nThe MCP server itself needs no hosted account or API key; chat models may require a separate provider account. For more complex explicit source permissions see [the local runtime guide](docs/local-node-runtime-v1.md).\n\n[Source code](https://github.com/oaslananka/semantic-state-runtime) | [MIT License](LICENSE) | [Third-party notices](THIRD_PARTY_NOTICES.txt)\n");
+    await writeFile(join(destination, "README.md"), "# Semantic State Runtime\n\n**Public npm MCP release.** Connect a real project once and let multiple AI coding agents request up-to-date, policy-authorized context. Independent human onboarding and private-data production readiness have not been verified.\n\n## Connect your first public GitHub project\n\n```bash\nnpm install -g semantic-state-runtime\nssrl-connect https://github.com/oaslananka/semantic-state-runtime\ncd ssrl-semantic-state-runtime\nopencode\n```\n\nAsk OpenCode: **Use SSRL context.compile for oaslananka/semantic-state-runtime. Which GitHub issues are open? Include issue numbers and source links.**\n\nThe command creates a new, read-only workspace with ready-to-use opencode.json, Antigravity .agents/mcp_config.json and copilot.mcp-config.json. Existing repository files and global client settings are untouched. GitHub metadata and selected Markdown are refreshed on demand; there is no background daemon or paid SSRL service.\n\nFor a local project use `ssrl-connect ./my-project --out ./my-project-ssrl`. For immediate GitHub refresh, use `ssrl-connect --refresh ./ssrl-semantic-state-runtime`. [See detailed instructions, source limits and evidence](docs/connect-project.md).\n\n## Synthetic read-only demo\n\nRun `ssrl-demo-init ./ssrl-example` to create an isolated example with a synthetic Project Atlas deadline of **2026-11-20**. The demo never scans your existing files, does not enable writes, and refuses existing output folders.\n\nThe MCP server itself needs no hosted account or API key; chat models may require a separate provider account. For more complex explicit source permissions see [the local runtime guide](docs/local-node-runtime-v1.md).\n\n[Source code](https://github.com/oaslananka/semantic-state-runtime) | [GPL-3.0-only License](LICENSE) | [Third-party notices](THIRD_PARTY_NOTICES.txt)\n");
 
     command(process.execPath, [join(destination, "dist/project-cli.js"), "--help"], destination);
     command(process.execPath, [join(destination, "dist/cli.js"), "--help"], destination);

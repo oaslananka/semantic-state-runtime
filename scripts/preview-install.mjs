@@ -24,7 +24,7 @@ async function install(argv) {
   pnpm(["build"]);
   pnpm(["--filter", "@ssrl/node-app", "deploy", "--prod", destination]);
 
-  // The deployed private workspace package does not inherit the root MIT license.
+  // The deployed private workspace package does not inherit the root GPL-3.0-only license.
   await copyFile(join(repository, "LICENSE"), join(destination, "LICENSE"));
   await mkdir(join(destination, "docs"), { recursive: true });
   for (const name of ["local-node-runtime-v1.md", "preview-install.md"]) {
@@ -32,7 +32,7 @@ async function install(argv) {
   }
   const installedManifest = join(destination, "package.json");
   const manifest = JSON.parse(await readFile(installedManifest, "utf8"));
-  manifest.license = "MIT";
+  manifest.license = "GPL-3.0-only";
   await writeFile(installedManifest, JSON.stringify(manifest, null, 2) + "\n", "utf8");
 
   const cli = join(destination, "dist/cli.js");
