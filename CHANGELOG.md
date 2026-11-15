@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.3.1](https://github.com/oaslananka/semantic-state-runtime/compare/v0.3.0...v0.3.1) (2026-11-15)
+
+
+### Licensing
+
+* Project-authored source is now distributed under GPL-3.0-only. Previously published versions retain their original license terms; see [LICENSING.md](LICENSING.md).
+
+### Bug Fixes
+
+* explain GitHub API access failures during onboarding ([#149](https://github.com/oaslananka/semantic-state-runtime/issues/149)) ([3c70612](https://github.com/oaslananka/semantic-state-runtime/commit/3c706126b89b455d4af59852ca28a33e82a738eb))
+* resolve connected projects by README title ([#151](https://github.com/oaslananka/semantic-state-runtime/issues/151)) ([a74a272](https://github.com/oaslananka/semantic-state-runtime/commit/a74a272ec5002ab0359b2a658395ba60f09720c9))
+
 ## [0.3.0](https://github.com/oaslananka/semantic-state-runtime/compare/v0.2.0...v0.3.0) (2026-11-15)
 
 
