@@ -100,7 +100,9 @@ try {
   assert.match(releaseManifest.repository.url, /github\.com\/oaslananka\/semantic-state-runtime/);
   assert.deepEqual(releaseManifest.dependencies ?? {}, {});
   assert.match(await readFile(join(releaseStage, "THIRD_PARTY_NOTICES.txt"), "utf8"), /LICENSES/);
-  npm(["publish", "--dry-run", "--tag", npmDistTag(releaseManifest.version), "--access", "public", "--json"], releaseStage, true);
+  // npm publish --dry-run refuses already published immutable versions.
+  // The release workflow performs a guarded dry-run only for new versions;
+  // this reusable CI smoke validates packing, files and offline installation.
   const releasePacked = packMetadata(releaseStage, root, releaseManifest.name);
   const paths = releasePacked.files.map((f) => f.path);
   assert.ok(paths.includes("THIRD_PARTY_NOTICES.txt"));
