@@ -50,7 +50,7 @@ export function parseGitHubRepository(raw: string): string | undefined {
   } else if (text.includes("://") || text.startsWith("git@")) {
     throw new Error("Only GitHub HTTPS URLs or owner/repo identifiers are supported.");
   }
-  const parts=/^([A-Za-z0-9][A-Za-z0-9-]{0,38})\/([A-Za-z0-9_][A-Za-z0-9_.-]{0,99})$/.exec(text);
+  const parts=/^([A-Za-z0-9][A-Za-z0-9-]{0,38})\/(\w[\w.-]{0,99})$/.exec(text);
   if (!parts || parts[2]==="." || parts[2]==="..") return undefined;
   return parts[1]+"/"+parts[2];
 }
@@ -78,9 +78,9 @@ async function githubFromGitRemote(folder:string):Promise<string|undefined> {
 async function sourcesFor(input:string, options:ConnectOptions):Promise<{localRoot?:string;githubRepo?:string}> {
   if (await optionalLocalDir(resolve(input))) {
     const localRoot=await realpath(resolve(input));
-    const githubRepo=options.github===undefined
-      ? (options.autoDetectGithub===false ? undefined : await githubFromGitRemote(localRoot))
-      : parseGitHubRepository(options.github);
+    let githubRepo: string | undefined;
+    if (options.github !== undefined) githubRepo = parseGitHubRepository(options.github);
+    else if (options.autoDetectGithub !== false) githubRepo = await githubFromGitRemote(localRoot);
     if (options.github!==undefined && !githubRepo) throw new Error("Invalid GitHub owner/repo.");
     return {localRoot,...(githubRepo?{githubRepo}:{})};
   }
@@ -159,45 +159,84 @@ async function replaceAtomic(path:string,text:string):Promise<void> {
     await rename(tmp,path);
   } finally { await rm(tmp,{force:true}); }
 }
-async function collectLocalDocuments(root:string):Promise<string> {
-  const selected:string[]=[];
-  let omitted=false;
-  for(const name of ["README.md","ROADMAP.md","CHANGELOG.md","TODO.md"]) {
-    const path=join(root,name);
+async function selectRootMarkdown(root: string): Promise<string[]> {
+  const names = ["README.md", "ROADMAP.md", "CHANGELOG.md", "TODO.md"];
+  const found = await Promise.all(names.map(async name => {
     try {
-      const info=await lstat(path);
-      if(info.isFile()&&!info.isSymbolicLink())selected.push(name);
-    } catch(e) {if((e as NodeJS.ErrnoException).code!=="ENOENT")throw e;}
-  }
-  async function scan(folder:string,prefix:string,depth:number):Promise<void> {
-    if(depth>2)return;
-    let list;
-    try {list=await readdir(folder,{withFileTypes:true});}
-    catch(e){if((e as NodeJS.ErrnoException).code==="ENOENT")return;throw e;}
-    for(const entry of list.toSorted((a,b)=>a.name.localeCompare(b.name,"en"))) {
-      if(entry.name.startsWith(".")||entry.isSymbolicLink())continue;
-      if(entry.isDirectory())await scan(join(folder,entry.name),prefix+entry.name+"/",depth+1);
-      else if(entry.isFile()&&entry.name.toLowerCase().endsWith(".md"))selected.push(prefix+entry.name);
-      if(selected.length>DOC_LIMIT){selected.pop();omitted=true;}
+      const info = await lstat(join(root, name));
+      return info.isFile() && !info.isSymbolicLink() ? name : undefined;
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === "ENOENT") return undefined;
+      throw error;
+    }
+  }));
+  return found.filter((value): value is string => value !== undefined);
+}
+
+async function selectNestedMarkdown(
+  root: string,
+  initial: readonly string[],
+): Promise<{ selected: string[]; omitted: boolean }> {
+  const selected = [...initial];
+  let omitted = false;
+
+  async function scan(folder: string, prefix: string, depth: number): Promise<void> {
+    if (depth > 2) return;
+    let entries;
+    try {
+      entries = await readdir(folder, { withFileTypes: true });
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === "ENOENT") return;
+      throw error;
+    }
+    for (const entry of entries.toSorted((a, b) => a.name.localeCompare(b.name, "en"))) {
+      if (entry.name.startsWith(".") || entry.isSymbolicLink()) continue;
+      if (entry.isDirectory()) {
+        // Scan sequentially: a large repository must not spawn unbounded I/O.
+        await scan(join(folder, entry.name), prefix + entry.name + "/", depth + 1);
+      } else if (entry.isFile() && entry.name.toLowerCase().endsWith(".md")) {
+        selected.push(prefix + entry.name);
+      }
+      if (selected.length > DOC_LIMIT) {
+        selected.pop();
+        omitted = true;
+      }
     }
   }
-  await scan(join(root,"docs"),"docs/",0);
-  if(selected.length===0)return "No selected README, ROADMAP, CHANGELOG, TODO or docs Markdown found.";
-  const sections:string[]=[];
-  for(const relativePath of selected) {
-    const path=join(root,...relativePath.split("/"));
-    const info=await lstat(path);
-    if(!info.isFile()||info.isSymbolicLink())throw new Error("Document changed during scan: "+relativePath);
-    if(info.size>FILE_BYTES){sections.push("FILE "+relativePath+" [SKIPPED: 64 KiB LIMIT]");continue;}
-    const data=await readFile(path,"utf8");
-    if(Buffer.byteLength(data)>FILE_BYTES)throw new Error("Document changed during read: "+relativePath);
-    const excerpt=data.replace(/[\u0000-\u0008\u000b-\u001f\u007f]/g," ").slice(0,1100);
-    sections.push("FILE "+relativePath+"\n"+excerpt+(data.length>1100?"\n[EXCERPT TRUNCATED]":""));
-  }
-  const aggregate=sections.join("\n\n---\n\n");
-  return aggregate.slice(0,11_000)+(aggregate.length>11_000?"\n[DOCUMENT INVENTORY TRUNCATED]":"")
-    +(omitted?"\n[SKIPPED: 20 DOCUMENT LIMIT; other docs may exist]":"");
+  await scan(join(root, "docs"), "docs/", 0);
+  return { selected, omitted };
 }
+
+async function markdownExcerpt(root: string, relativePath: string): Promise<string> {
+  const path = join(root, ...relativePath.split("/"));
+  const info = await lstat(path);
+  if (!info.isFile() || info.isSymbolicLink()) {
+    throw new Error("Document changed during scan: " + relativePath);
+  }
+  if (info.size > FILE_BYTES) return "FILE " + relativePath + " [SKIPPED: 64 KiB LIMIT]";
+  const data = await readFile(path, "utf8");
+  if (Buffer.byteLength(data) > FILE_BYTES) {
+    throw new Error("Document changed during read: " + relativePath);
+  }
+  const excerpt = data.replace(/[\u0000-\u0008\u000b-\u001f\u007f]/g, " ").slice(0, 1100);
+  return "FILE " + relativePath + "\n" + excerpt
+    + (data.length > 1100 ? "\n[EXCERPT TRUNCATED]" : "");
+}
+
+async function collectLocalDocuments(root: string): Promise<string> {
+  const topLevel = await selectRootMarkdown(root);
+  const { selected, omitted } = await selectNestedMarkdown(root, topLevel);
+  if (selected.length === 0) {
+    return "No selected README, ROADMAP, CHANGELOG, TODO or docs Markdown found.";
+  }
+  // At most DOC_LIMIT files are read in parallel; order is deterministic.
+  const sections = await Promise.all(selected.map(item => markdownExcerpt(root, item)));
+  const aggregate = sections.join("\n\n---\n\n");
+  return aggregate.slice(0, 11_000)
+    + (aggregate.length > 11_000 ? "\n[DOCUMENT INVENTORY TRUNCATED]" : "")
+    + (omitted ? "\n[SKIPPED: 20 DOCUMENT LIMIT; other docs may exist]" : "");
+}
+
 async function githubGet(path:string,fetchImpl:typeof fetch):Promise<unknown> {
   const headers:Record<string,string>={
     accept:"application/vnd.github+json","x-github-api-version":"2022-11-28",
@@ -283,50 +322,99 @@ async function readSettings(file:string):Promise<ProjectSettings> {
   return obj as ProjectSettings;
 }
 
-export async function refreshProject(file:string, options:RefreshOptions={}):Promise<void> {
-  const meta=resolve(file),workspace=dirname(meta),settings=await readSettings(meta);
-  const syncFile=join(workspace,"refresh.json");
-  const now=(options.now??Date.now)();
-  let last=0;
-  try{last=(JSON.parse(await readFile(syncFile,"utf8")) as {githubFetchedAt?:number}).githubFetchedAt??0;}
-  catch(e){if((e as NodeJS.ErrnoException).code!=="ENOENT"&&!(e instanceof SyntaxError))throw e;}
-  // A public anonymous GitHub token budget is only 60 requests/hour.
-  // Three API requests per refresh require a longer no-token window.
-  const rateWindow=(process.env.GH_TOKEN||process.env.GITHUB_TOKEN)
-    ?settings.refreshIntervalMs:5*60_000;
-  const shouldFetch=!!settings.githubRepo&&
-    (options.force===true||now-last>=rateWindow||last>now);
-  // Never mask a failed due remote request with cached data.
-  const remote=shouldFetch?await fetchGitHub(settings.githubRepo!,options.fetchImpl??fetch):undefined;
-  const docs=settings.localRoot?await collectLocalDocuments(settings.localRoot):undefined;
-  const label=settings.githubRepo??basename(settings.localRoot!);
-  if(docs!==undefined){
-    const fields:Record<string,string|readonly number[]>={name:label,documents:docs};
-    if (settings.githubRepo) {
-      // Preserve the original offline comparison snapshot. Fresh GitHub changes
-      // must not rewrite history and pretend the two sources never disagreed.
-      try {
-        const prior = await readFile(join(workspace,"sources/local/project.md"),"utf8");
-        const match = /^snapshot_open_issue_ids:\s*(\[[^\n]*\])/m.exec(prior);
-        if (!match) throw new Error("The offline issue snapshot is missing; refusing to infer history.");
-        fields.snapshot_open_issue_ids = JSON.parse(match[1]!) as number[];
-      } catch (error) {
-        if ((error as NodeJS.ErrnoException).code !== "ENOENT" || !remote) throw error;
-        fields.snapshot_open_issue_ids = remote.issues.map(item=>item.number);
-      }
+type FetchedGitHub = Awaited<ReturnType<typeof fetchGitHub>>;
+
+async function lastGitHubFetch(path: string): Promise<number> {
+  try {
+    const metadata = JSON.parse(await readFile(path, "utf8")) as { githubFetchedAt?: unknown };
+    return typeof metadata.githubFetchedAt === "number" && Number.isFinite(metadata.githubFetchedAt)
+      ? metadata.githubFetchedAt : 0;
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT" || error instanceof SyntaxError) return 0;
+    throw error;
+  }
+}
+
+function shouldRefreshGitHub(
+  settings: ProjectSettings,
+  last: number,
+  now: number,
+  force: boolean,
+): boolean {
+  if (!settings.githubRepo) return false;
+  // Anonymous GitHub has a 60-request/hour budget. Three API reads per
+  // refresh make a five-minute minimum more sustainable than one minute.
+  const rateWindow = (process.env.GH_TOKEN || process.env.GITHUB_TOKEN)
+    ? settings.refreshIntervalMs : 5 * 60_000;
+  return force || now - last >= rateWindow || last > now;
+}
+
+async function originalIssueSnapshot(
+  workspace: string,
+  remote: FetchedGitHub | undefined,
+): Promise<number[]> {
+  try {
+    const previous = await readFile(join(workspace, "sources/local/project.md"), "utf8");
+    const match = /^snapshot_open_issue_ids:\s*(\[[^\n]*\])/m.exec(previous);
+    if (!match) throw new Error("The offline issue snapshot is missing; refusing to infer history.");
+    const value = JSON.parse(match[1]!) as unknown;
+    if (!Array.isArray(value) || value.some(item => !Number.isSafeInteger(item) || item < 1)) {
+      throw new Error("Invalid historical GitHub issue snapshot.");
     }
-    await replaceAtomic(join(workspace,"sources/local/project.md"),sourceMarkdown(fields,"Local project document excerpts"));
+    return value as number[];
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== "ENOENT" || remote === undefined) throw error;
+    // The first snapshot is historical evidence, not mutable live GitHub state.
+    return remote.issues.map(item => item.number);
   }
-  if(remote){
-    const fields:Record<string,string|readonly number[]>={
-      name:remote.repo.full_name, description:scrub(remote.repo.description??"No description"),
-      open_issue_ids:remote.issues.map(x=>x.number),
-      open_issues:titles(remote.issues,"issues"),
-      open_pulls:titles(remote.pulls,"pull requests"),
-    };
-    await replaceAtomic(join(workspace,"sources/github/project.md"),sourceMarkdown(fields,"Current GitHub issue and PR metadata"));
-    await replaceAtomic(syncFile,JSON.stringify({githubFetchedAt:now},null,2)+"\n");
+}
+
+async function saveLocalSource(
+  workspace: string,
+  settings: ProjectSettings,
+  docs: string | undefined,
+  remote: FetchedGitHub | undefined,
+): Promise<void> {
+  if (docs === undefined) return;
+  const label = settings.githubRepo ?? basename(settings.localRoot!);
+  const fields: Record<string, string | readonly number[]> = { name: label, documents: docs };
+  if (settings.githubRepo) {
+    fields.snapshot_open_issue_ids = await originalIssueSnapshot(workspace, remote);
   }
+  await replaceAtomic(join(workspace, "sources/local/project.md"),
+    sourceMarkdown(fields, "Local project document excerpts"));
+}
+
+async function saveGitHubSource(
+  workspace: string,
+  remote: FetchedGitHub,
+  now: number,
+): Promise<void> {
+  const fields: Record<string, string | readonly number[]> = {
+    name: remote.repo.full_name,
+    description: scrub(remote.repo.description ?? "No description"),
+    open_issue_ids: remote.issues.map(item => item.number),
+    open_issues: titles(remote.issues, "issues"),
+    open_pulls: titles(remote.pulls, "pull requests"),
+  };
+  await replaceAtomic(join(workspace, "sources/github/project.md"),
+    sourceMarkdown(fields, "Current GitHub issue and PR metadata"));
+  await replaceAtomic(join(workspace, "refresh.json"),
+    JSON.stringify({ githubFetchedAt: now }, null, 2) + "\n");
+}
+
+export async function refreshProject(file: string, options: RefreshOptions = {}): Promise<void> {
+  const workspace = dirname(resolve(file));
+  const settings = await readSettings(resolve(file));
+  const now = (options.now ?? Date.now)();
+  const last = await lastGitHubFetch(join(workspace, "refresh.json"));
+  const remote = shouldRefreshGitHub(settings, last, now, options.force === true)
+    ? await fetchGitHub(settings.githubRepo!, options.fetchImpl ?? fetch)
+    : undefined;
+  // Fail due GitHub reads before committing any newly selected local data.
+  const docs = settings.localRoot ? await collectLocalDocuments(settings.localRoot) : undefined;
+  await saveLocalSource(workspace, settings, docs, remote);
+  if (remote) await saveGitHubSource(workspace, remote, now);
 }
 
 export async function connectProject(input:string,options:ConnectOptions):Promise<ConnectionResult> {

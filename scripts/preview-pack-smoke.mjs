@@ -158,7 +158,7 @@ try {
   const selectedProject = join(root, "selected-project");
   const connectedWorkspace = join(root, "connected-workspace");
   await mkdir(selectedProject);
-  await writeFile(join(selectedProject, "README.md"), "# Sample project\\nINITIAL_PROJECT_DECISION\\n".replaceAll("\\n", "\n"));
+  await writeFile(join(selectedProject, "README.md"), "# Sample project\nINITIAL_PROJECT_DECISION\n");
   // A person starting inside the project must get a sibling workspace without an --out flag.
   runNode([connector, ".", "--local-only"], { cwd: selectedProject });
   assert.equal(existsSync(join(root, "ssrl-selected-project", "ssrl.config.json")), true);

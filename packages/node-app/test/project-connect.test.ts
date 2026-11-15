@@ -40,7 +40,7 @@ describe("one-command project connection", () => {
     const {fetchImpl, urls} = githubResponse([{number:141,title:"Finish first-run acceptance"}]);
     const result = await connectProject("https://github.com/acme/sample-project", {destination:workspace, fetchImpl});
     expect(result.githubRepo).toBe("acme/sample-project");
-    expect(urls.length).toBe(3);
+    expect(urls).toHaveLength(3);
     const config=JSON.parse(await readFile(join(workspace,"ssrl.config.json"),"utf8"));
     const connection=JSON.parse(await readFile(join(workspace,"project.json"),"utf8"));
     expect(connection.projectId).toMatch(/^[a-f0-9]{32}$/);
