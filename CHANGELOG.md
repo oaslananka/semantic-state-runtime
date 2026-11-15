@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.2](https://github.com/oaslananka/semantic-state-runtime/compare/v0.3.1...v0.3.2) (2026-11-15)
+
+
+### Bug Fixes
+
+* use existing GitHub CLI when anonymous API quota is exhausted ([#153](https://github.com/oaslananka/semantic-state-runtime/issues/153)) ([8883c6e](https://github.com/oaslananka/semantic-state-runtime/commit/8883c6e952abe82b2d49ca262ca40070ff2daf21))
+
 ## [0.3.1](https://github.com/oaslananka/semantic-state-runtime/compare/v0.3.0...v0.3.1) (2026-11-15)
 
 

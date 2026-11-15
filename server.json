@@ -8,12 +8,12 @@
     "source": "github"
   },
   "websiteUrl": "https://github.com/oaslananka/semantic-state-runtime#install-from-npm",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "packages": [
     {
       "registryType": "npm",
       "identifier": "semantic-state-runtime",
-      "version": "0.3.1",
+      "version": "0.3.2",
       "transport": {
         "type": "stdio"
       },
