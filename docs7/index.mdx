@@ -1,0 +1,264 @@
+---
+title: "Semantic State Runtime"
+description: "Protocol-neutral, MCP-accessible semantic state runtime with explicit source authority."
+---
+
+<p align="center">
+  <a href="https://github.com/oaslananka/semantic-state-runtime/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0--only-blue" alt="GPL-3.0-only license" /></a>
+  <a href="https://gitgem.org/github/oaslananka/semantic-state-runtime"><img src="https://gitgem.org/api/badge/github/oaslananka/semantic-state-runtime.svg" alt="GitGem" /></a>
+</p>
+
+<p align="center">
+  <a href="https://github.com/sponsors/oaslananka"><img src="https://img.shields.io/badge/GitHub-Sponsors-ea4aaa?logo=githubsponsors" alt="GitHub Sponsors" /></a>
+  <a href="https://www.buymeacoffee.com/oaslananka"><img src="https://img.shields.io/badge/Buy%20Me%20a%20Coffee-Support-ffdd00?logo=buymeacoffee&amp;logoColor=black" alt="Buy Me a Coffee" /></a>
+  <a href="https://github.com/oaslananka/semantic-state-runtime"><img src="https://img.shields.io/github/stars/oaslananka/semantic-state-runtime?label=Stars&amp;color=8e65d3" alt="Stars" /></a>
+</p>
+
+
+
+**Switch AI coding agents without losing the current project facts.**
+
+Connect one public GitHub repository or selected local folder, then ask your MCP-capable AI agent for the open issues and relevant decisions. SSRL keeps a bounded, read-only project view updated on demand and applies explicit source authority instead of trusting stale local notes.
+
+> **Status: public npm MCP release (current version in the npm badge).** The MCP runtime is usable
+> with synthetic data, but independent human onboarding and production use are
+> not yet validated. No hosted service or model account is included.
+
+Semantic State Runtime (SSRL) helps AI agents use the **right information**
+when several sources disagree. It reconciles writable state against explicit
+source authority, persists the result across sessions and exposes only
+policy-authorized context through the Model Context Protocol (MCP).
+
+## Why it matters
+
+Imagine a project deadline is **November 15** in a stale local copy,
+but the trusted source says **November 20**. Rather than letting an AI
+assistant guess, SSRL can:
+
+1. Identify which source is authoritative for the field.
+2. Produce and apply a precondition-checked correction to the writable copy.
+3. Give a new MCP client the authorized, current deadline after restart.
+4. Exclude fields and evidence the client is not permitted to see.
+
+This is **state reconciliation and access-controlled context**, not simply
+chat-history memory, an unrestricted file search, or an LLM provider.
+
+## Connect your first real project
+
+```bash
+npm install -g semantic-state-runtime
+ssrl-connect https://github.com/oaslananka/semantic-state-runtime
+cd ssrl-semantic-state-runtime
+opencode
+```
+
+Ask: **"Use SSRL context.compile for oaslananka/semantic-state-runtime. Which GitHub issues are currently open? Show issue numbers and sources."** The generated OpenCode configuration is ready; Antigravity's workspace-local .agents/mcp_config.json and a separate Copilot MCP entry are included.
+
+Alternatively, connect a local folder once using `ssrl-connect ./my-project --out ./my-project-ssrl`. It discovers the project's GitHub origin when present, or accepts `--local-only`. Existing files are never modified; only selected Markdown, and GitHub open issue/PR metadata when connected, are ingested. The bounded refresh runs when context is requested, not through a background service. **This is not an automatic history of every chat or file.**
+
+See [the one-command project connection guide](connect-project) for exact limits, private GitHub access, refresh timing, source authority and reproducible acceptance evidence.
+
+## Install from npm
+
+Requirements: **Node.js 24.12+** and npm. No Git clone, workspace build,
+API key, or model account is needed to try the **synthetic read-only** MCP server.
+
+```bash
+npm install -g semantic-state-runtime
+ssrl-demo-init ./ssrl-example
+ssrl-node --version
+```
+
+The initializer creates a **new** folder and refuses to overwrite one.
+It writes read-only synthetic Markdown and **ready-to-use client definitions**:
+
+- **OpenCode:** open `./ssrl-example` as the working directory; the generated
+  `opencode.json` uses the installed server's absolute paths.
+- **VS Code Copilot:** in Copilot, choose **Chat: Open Customizations → MCP
+  Servers → Copilot Global**. Copy the `ssrl` entry from
+  `./ssrl-example/copilot.mcp-config.json` into your existing global
+  `mcp-config.json` (merge; do not replace other configured servers).
+
+The underlying `ssrl.config.json` limits access to synthetic records and
+**does not grant writes**. Ask the client to call `context.compile` for
+`Project Atlas deadline`; the authorized response contains **2026-11-20**.
+A model account may be needed by your chat client, not by SSRL itself.
+Client definitions are generated inside the demo folder; your global
+configuration is never modified.
+
+Use the explicit [configuration guide](local-node-runtime-v1)
+before authorizing access to real files. Windows and Linux registry installs
+plus MCP tool calls passed with synthetic data; independent human onboarding
+and production suitability remain **unverified**.
+
+See [installation and client setup](preview-install).
+
+## Run the demo
+
+Requirements: **Node.js 24.12+** and **pnpm 12.14.0**. From a fresh clone:
+
+```bash
+pnpm install --frozen-lockfile
+pnpm build
+pnpm demo:handoff
+```
+
+The demo uses synthetic Markdown/SQLite data and **two actual MCP SDK
+client sessions**. Its output shows the stale value, trusted value,
+`state.plan`/`state.apply` reconciliation, restarted runtime, authorized
+`context.compile` answer, and privacy checks. Package installation may use
+the network; **the demo itself requires no API key or external model**.
+
+[Walk through the real observed output](https://github.com/oaslananka/semantic-state-runtime/blob/main/examples/SHOWCASE.md).
+
+## Use it as an MCP server
+
+For a source-built alternative, see [the source-based Developer Preview installer](preview-install).
+It builds a production-only installation at an explicit final path; the
+source-based Windows installation cannot safely be moved afterward. The
+**published npm package is standalone**, separate from that limitation.
+
+Maintainers can still build a **private local npm tarball** using
+`pnpm preview:pack -- <new-staging-directory>` and verify it with
+`pnpm test:preview-pack`. **The stable npm package** is publicly available with GitHub
+release provenance. **The Registry listing must be verified separately**
+against the official MCP Registry API; independent consumer acceptance
+has not yet been established.
+
+When running a local source build instead, after creating
+an explicit configuration file using the
+[local runtime guide](local-node-runtime-v1), start the server with:
+
+```bash
+node packages/node-app/dist/cli.js ./ssrl.config.json
+```
+
+`./ssrl.config.json` is **your own file**, not an included ready-made
+production config. Use explicit source mappings, principal scopes, field
+policies and local paths. The server does not silently discover user files.
+Point your MCP-capable client's **stdio command and arguments** at the
+built CLI and that config; each chat client has a different config format.
+
+| MCP tool | What it does |
+| --- | --- |
+| `state.plan` | Computes a bounded proposed change based on source authority and preconditions. |
+| `state.apply` | Applies an approved proposal only within configured write permissions. |
+| `context.compile` | Returns current, policy-scoped semantic context within a bounded token budget. |
+
+**Start read-only.** Grant only `state:read` and `context:read` when a client
+needs retrieval, and disable writable field policies and plan/apply. The
+[first-run OpenCode setup](https://github.com/oaslananka/semantic-state-runtime/blob/main/examples/README.md#opencode-v2-first-use-local-mcp)
+creates such a **temporary synthetic** read-only workspace automatically:
+
+```bash
+pnpm demo:chat-setup
+```
+
+The setup is offline; an actual hosted-model chat request requires a
+separate, explicit developer API key and network access.
+
+## Verified AI client integrations
+
+**OpenCode v2.3.0** and **Goose CLI v1.59.0** each made a real
+`context.compile` MCP call and returned the correct authorized deadline
+from synthetic data. They are two independently tested chat applications,
+**not** two independently hosted model providers: both used the same NVIDIA
+developer gateway on one Windows host. These tests do **not** establish
+physical cross-device synchronization or readiness for real user data.
+
+See [OpenCode and Goose examples](https://github.com/oaslananka/semantic-state-runtime/blob/main/examples/README.md) and the separate
+[live two-model handoff](https://github.com/oaslananka/semantic-state-runtime/blob/main/examples/README.md#optional-two-live-llm-models-using-the-same-mcp-state).
+
+## Project status
+
+- **Ready to try:** public npm stable release (`latest`),
+  read-only synthetic first-run, local build, deterministic demo, stdio MCP
+  integration and regression tests.
+- **Not yet delivered:** independently validated human onboarding or
+  a fully supported consumer product. Registry discoverability is verified
+  separately through the official public API after publication.
+- **License:** [GNU GPL v3.0](https://github.com/oaslananka/semantic-state-runtime/blob/main/LICENSE), copyright (c) 2026 Osman Aslan. Redistribution is subject to the GPL copyleft terms.
+- **Participation:** read [Contributing](https://github.com/oaslananka/semantic-state-runtime/blob/main/CONTRIBUTING.md) and
+  [Security](https://github.com/oaslananka/semantic-state-runtime/blob/main/SECURITY.md). Security issues can be reported privately.
+
+## Architecture and implementation
+
+```text
+source systems / local files
+        ↓
+connectors + restart-safe ingestion
+        ↓
+immutable Artifact Plane + Semantic State Store
+        ↓
+bitemporal state / retractions / typed identity / relations
+        ↓
+incremental Context Capsules
+        ↓
+Context Access Gateway
+        ↓
+retrieval / future agent adapters
+
+AI side effects:
+agent -> RuntimeHost plan/apply -> provider preconditions -> journal
+```
+
+Implemented checkpoints include:
+
+- canonical entity identity and typed alias resolution;
+- bitemporal semantic observations and immutable retractions;
+- explicit field authority and conflict detection;
+- deterministic reconciliation planning and proposal digests;
+- durable SQLite semantic state + ordered change feed;
+- incremental, time-aware context capsules;
+- Markdown filesystem and Google Calendar ingestion adapters;
+- immutable content-addressed Artifact Plane;
+- policy-enforced artifact access;
+- local stdio MCP composition;
+- authenticated stateless MCP 2026-07-28 HTTP composition;
+- principal-aware, capsule-backed derived context access;
+- MCP `context.compile` projection with authenticated `context:read` preflight;
+- policy-scoped prefix-Merkle replication with bounded resumable sessions;
+- principal-scoped immutable record + artifact blob transfer;
+- authenticated bounded replication HTTP with real two-node semantic/artifact convergence;
+- optional Ed25519 device-bound HTTP Message Signature authentication with replay defense;
+- epoch-scoped opaque encrypted replication object identities that hide plaintext record/blob identifiers and digests from an untrusted relay;
+- descriptor-generic prefix-Merkle + bounded reconciliation with epoch-scoped opaque views and no plaintext reconciliation metadata.
+
+## Design posture
+
+Core constraints are intentionally stricter than a conventional "RAG over personal files" system:
+
+- source evidence remains auditable;
+- derived caches/indexes are rebuildable and never define truth;
+- authorization happens before identity resolution/ranking when disclosure could leak hidden state;
+- agents receive bounded semantic context rather than unrestricted source-system search;
+- transport authentication and domain authorization are separate layers;
+- protocol adapters such as MCP do not define canonical semantics.
+
+See `docs/invariants.md` and the versioned design documents under `docs/`.
+
+## Near-term gaps
+
+The runtime has a public stable release and a one-command read-only project connector, but independent novice-user onboarding and private-data production readiness remain unverified. Important remaining work includes:
+
+- more source connectors and semantic mappings;
+- historical context-access semantics;
+- opaque provenance/evidence expansion handles;
+- device enrollment, sender-constrained authentication and key rotation;
+- ciphertext object storage and opaque-only HTTP relay integration for untrusted relay/cloud deployments;
+- active-active source receipt/witness semantics;
+- deployment composition, real IdP verifier integration and observability;
+- product UX, onboarding, sync operations and commercial packaging.
+
+## Commands
+
+```bash
+pnpm install --frozen-lockfile
+pnpm typecheck
+pnpm test
+pnpm build
+pnpm benchmark:context:v2
+pnpm benchmark:google-calendar:v1
+pnpm benchmark:markdown:v1
+pnpm test:stdio
+```

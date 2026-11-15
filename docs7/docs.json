@@ -1,0 +1,126 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "mint",
+  "name": "Semantic State Runtime",
+  "colors": {
+    "primary": "#8E65D3",
+    "light": "#8E65D3",
+    "dark": "#A98AE0"
+  },
+  "navbar": {
+    "primary": {
+      "type": "github",
+      "href": "https://github.com/oaslananka/semantic-state-runtime"
+    }
+  },
+  "footer": {
+    "socials": {
+      "github": "https://github.com/oaslananka/semantic-state-runtime"
+    }
+  },
+  "navigation": {
+    "groups": [
+      {
+        "group": "Get started",
+        "pages": [
+          "index",
+          "preview-install",
+          "connect-project",
+          "local-node-runtime-v1"
+        ]
+      },
+      {
+        "group": "Concepts",
+        "pages": [
+          "invariants",
+          "semantics-v0",
+          "bitemporal-state-v1",
+          "semantic-retractions-v1",
+          "runtime-v0"
+        ]
+      },
+      {
+        "group": "Connectors and ingestion",
+        "pages": [
+          "connector-contract-v0",
+          "connector-ingestion-v1",
+          "markdown-authoritative-ingestion-v1",
+          "artifact-aware-ingestion-v1",
+          "google-calendar-adapter-v1",
+          "source-verification-v1"
+        ]
+      },
+      {
+        "group": "Semantic state and context",
+        "pages": [
+          "semantic-state-store-v1",
+          "incremental-context-capsules-v1",
+          "durable-capsule-cache-v1",
+          "entity-graph-context-v1"
+        ]
+      },
+      {
+        "group": "Artifacts",
+        "pages": [
+          "artifact-plane-v1",
+          "artifact-access-gateway-v1"
+        ]
+      },
+      {
+        "group": "Runtime and access",
+        "pages": [
+          "runtime-access-policy-v1",
+          "runtime-journal-v1",
+          "reconciliation-proposal-v1",
+          "context-access-gateway-v1"
+        ]
+      },
+      {
+        "group": "Protocol adapters",
+        "pages": [
+          "mcp-adapter-v1",
+          "authenticated-mcp-http-v1"
+        ]
+      },
+      {
+        "group": "Replication",
+        "pages": [
+          "immutable-replication-v0",
+          "prefix-merkle-reconciliation-v1",
+          "bounded-reconciliation-session-v1",
+          "policy-scoped-replication-v1",
+          "principal-scoped-artifact-blob-replication-v1",
+          "replication-http-transport-v1"
+        ]
+      },
+      {
+        "group": "Encryption and relay opacity",
+        "pages": [
+          "e2e-vault-envelope-v1",
+          "vault-keyring-v1",
+          "trusted-encryption-key-bindings-v1",
+          "opaque-encrypted-replication-v1",
+          "opaque-replication-store-v1",
+          "incremental-opaque-merkle-v1",
+          "opaque-merkle-reconciliation-v1"
+        ]
+      },
+      {
+        "group": "Device trust",
+        "pages": [
+          "device-trust-v1",
+          "device-bound-http-signatures-v1",
+          "device-trust-management-http-v1",
+          "device-trust-recovery-http-v1",
+          "owner-trust-recovery-v1"
+        ]
+      },
+      {
+        "group": "Benchmarks",
+        "pages": [
+          "context-benchmark-v1"
+        ]
+      }
+    ]
+  }
+}
