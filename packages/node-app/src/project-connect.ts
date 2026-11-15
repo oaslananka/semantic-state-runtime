@@ -20,14 +20,17 @@ interface ProjectSettings {
   githubRepo?: string;
   refreshIntervalMs: number;
 }
+type GitHubCliRead = (path:string)=>Promise<unknown>;
 export interface ConnectOptions {
   destination: string;
   github?: string;
   autoDetectGithub?: boolean;
   fetchImpl?: typeof fetch;
+  ghCliReadImpl?: GitHubCliRead;
 }
 export interface RefreshOptions {
   fetchImpl?: typeof fetch;
+  ghCliReadImpl?: GitHubCliRead;
   force?: boolean;
   now?: () => number;
 }
@@ -280,7 +283,15 @@ function githubHttpError(response: Response): Error {
     +" Retry later or use an existing GH_TOKEN/GITHUB_TOKEN in your shell."
     +" No stale GitHub issue or PR data was treated as current.");
 }
-async function githubGet(path:string,fetchImpl:typeof fetch):Promise<unknown> {
+async function githubCliRead(path:string):Promise<unknown> {
+  // Existing GitHub CLI auth stays in its credential store, not in SSRL.
+  const {stdout}=await execFileAsync("gh",["api","--hostname","github.com","-X","GET",path],{
+    timeout:9000,maxBuffer:RESPONSE_BYTES,windowsHide:true,
+  });
+  if(Buffer.byteLength(stdout)>RESPONSE_BYTES)throw new Error("GitHub CLI response exceeded 512 KiB.");
+  return JSON.parse(stdout) as unknown;
+}
+async function githubGet(path:string,fetchImpl:typeof fetch,ghCliRead?:GitHubCliRead):Promise<unknown> {
   const headers:Record<string,string>={
     accept:"application/vnd.github+json","x-github-api-version":"2022-11-28",
     "user-agent":"semantic-state-runtime-local",
@@ -293,7 +304,15 @@ async function githubGet(path:string,fetchImpl:typeof fetch):Promise<unknown> {
       method:"GET",headers,redirect:"error",signal:AbortSignal.timeout(9000),
     });
   }catch{throw new Error("GitHub refresh unavailable. Old metadata was not served as fresh.");}
-  if(!response.ok)throw githubHttpError(response);
+  if(!response.ok) {
+    const limited=response.status===429
+      || (response.status===403 && response.headers.get("x-ratelimit-remaining")==="0");
+    if(limited && !token && ghCliRead){
+      try {return await ghCliRead(path);}
+      catch { /* No working local GitHub CLI login; preserve the original fail-closed error. */ }
+    }
+    throw githubHttpError(response);
+  }
   if(Number(response.headers.get("content-length")??0)>RESPONSE_BYTES)
     throw new Error("GitHub response exceeded 512 KiB.");
   const body=response.body?.getReader();
@@ -331,12 +350,12 @@ function validItems(raw:unknown,repository:string):GitHubItem[] {
     return item as GitHubItem;
   });
 }
-async function fetchGitHub(repo:string,fetchImpl:typeof fetch) {
+async function fetchGitHub(repo:string,fetchImpl:typeof fetch,ghCliRead?:GitHubCliRead) {
   const stem="/repos/"+repo;
   const [rawRepo,rawIssues,rawPulls]=await Promise.all([
-    githubGet(stem,fetchImpl),
-    githubGet(stem+"/issues?state=open&per_page=20&sort=updated&direction=desc",fetchImpl),
-    githubGet(stem+"/pulls?state=open&per_page=20&sort=updated&direction=desc",fetchImpl),
+    githubGet(stem,fetchImpl,ghCliRead),
+    githubGet(stem+"/issues?state=open&per_page=20&sort=updated&direction=desc",fetchImpl,ghCliRead),
+    githubGet(stem+"/pulls?state=open&per_page=20&sort=updated&direction=desc",fetchImpl,ghCliRead),
   ]);
   if(!rawRepo||typeof rawRepo!=="object"||
       (rawRepo as GitHubRepo).full_name?.toLowerCase()!==repo.toLowerCase())
@@ -452,7 +471,7 @@ export async function refreshProject(file: string, options: RefreshOptions = {})
   const now = (options.now ?? Date.now)();
   const last = await lastGitHubFetch(join(workspace, "refresh.json"));
   const remote = shouldRefreshGitHub(settings, last, now, options.force === true)
-    ? await fetchGitHub(settings.githubRepo!, options.fetchImpl ?? fetch)
+    ? await fetchGitHub(settings.githubRepo!, options.fetchImpl ?? fetch, options.ghCliReadImpl ?? (options.fetchImpl ? undefined : githubCliRead))
     : undefined;
   // Fail due GitHub reads before committing any newly selected local data.
   const docs = settings.localRoot ? await collectLocalDocuments(settings.localRoot) : undefined;
@@ -484,7 +503,7 @@ export async function connectProject(input:string,options:ConnectOptions):Promis
     if(sources.githubRepo)await mkdir(join(workspace,"sources/github"),{mode:0o700});
     const meta=join(workspace,"project.json");
     await writeFile(meta,JSON.stringify(settings,null,2)+"\n",{mode:0o600});
-    await refreshProject(meta,{...(options.fetchImpl===undefined?{}:{fetchImpl:options.fetchImpl}),force:true});
+    await refreshProject(meta,{...(options.fetchImpl===undefined?{}:{fetchImpl:options.fetchImpl}),...(options.ghCliReadImpl===undefined?{}:{ghCliReadImpl:options.ghCliReadImpl}),force:true});
     const readmeTitle=await localReadmeTitle(sources.localRoot);
     const name=sources.githubRepo??basename(sources.localRoot!);
     await writeFile(join(workspace,"ssrl.config.json"),

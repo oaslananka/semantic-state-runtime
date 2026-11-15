@@ -176,6 +176,53 @@ describe("one-command project connection", () => {
     await expect(refreshProject(join(workspace,"project.json"),{fetchImpl:denied,force:true}))
       .rejects.toThrow(/GitHub API access denied.*GH_TOKEN.*current/i);
   });
+  it("uses existing GitHub CLI read access when anonymous API access is rate-limited", async () => {
+    const {workspace}=await fixture();
+    const response=githubResponse([{number:141,title:"Current open task"}],[{number:77,title:"Current PR"}]);
+    const cliPaths:string[]=[];
+    const ghCliReadImpl=async (path:string):Promise<unknown>=>{
+      cliPaths.push(path);
+      const result=await response.fetchImpl("https://api.github.com"+path);
+      return result.json() as Promise<unknown>;
+    };
+    const anonymous:typeof fetch=async()=>new Response("rate-limited",{
+      status:403,headers:{"x-ratelimit-remaining":"0","x-ratelimit-reset":"4102444800"},
+    });
+    await connectProject("acme/sample-project",{
+      destination:workspace,fetchImpl:anonymous,ghCliReadImpl,
+    });
+    expect(cliPaths).toHaveLength(3);
+    expect(cliPaths.every(path=>path.startsWith("/repos/acme/sample-project"))).toBe(true);
+    const source=await readFile(join(workspace,"sources/github/project.md"),"utf8");
+    expect(source).toContain("#141");
+    expect(source).toContain("#77");
+    const config=JSON.parse(await readFile(join(workspace,"ssrl.config.json"),"utf8"));
+    expect(config.policy.operations.apply).toBe(false);
+    expect(config.policy.fields.every((field:{write:boolean})=>!field.write)).toBe(true);
+  });
+
+  it("does not use CLI credentials for an unrelated GitHub 403 or serve stale data on CLI failure",async()=>{
+    const {workspace}=await fixture();
+    const original=githubResponse([{number:14,title:"Previously open"}]);
+    await connectProject("acme/sample-project",{destination:workspace,fetchImpl:original.fetchImpl});
+    const before=await readFile(join(workspace,"sources/github/project.md"),"utf8");
+    let cliCalls=0;
+    const ghCliReadImpl=async():Promise<unknown>=>{cliCalls++;throw Error("CLI credentials unavailable");};
+    const denied:typeof fetch=async()=>new Response("forbidden",{status:403});
+    await expect(refreshProject(join(workspace,"project.json"),{
+      force:true,fetchImpl:denied,ghCliReadImpl,
+    })).rejects.toThrow(/GitHub API access denied/);
+    expect(cliCalls).toBe(0);
+    const limited:typeof fetch=async()=>new Response("rate limit",{
+      status:403,headers:{"x-ratelimit-remaining":"0"},
+    });
+    await expect(refreshProject(join(workspace,"project.json"),{
+      force:true,fetchImpl:limited,ghCliReadImpl,
+    })).rejects.toThrow(/GitHub API rate limit/);
+    expect(cliCalls).toBeGreaterThan(0);
+    expect(await readFile(join(workspace,"sources/github/project.md"),"utf8")).toBe(before);
+  });
+
   it("skips symlinks and hidden documents and never writes to the selected repository",async()=>{
     const {project,workspace,root}=await fixture();
     await mkdir(join(project,"docs"),{recursive:true});
