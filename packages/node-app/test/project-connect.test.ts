@@ -204,4 +204,25 @@ describe("one-command project connection", () => {
     await expect(readFile(join(project,"ssrl","project.json"))).rejects.toThrow();
   });
 
+  it("does not follow a symlinked docs root outside the chosen project", async () => {
+    const { project, workspace, root } = await fixture();
+    await mkdir(project);
+    await writeFile(join(project, "README.md"), "# Real selected project\\n".replaceAll("\\n", "\n"));
+    const external = join(root, "private-documents");
+    await mkdir(external);
+    await writeFile(join(external, "leaked.md"), "PRIVATE-EVIDENCE=outside-project");
+    try {
+      await symlink(external, join(project, "docs"), process.platform === "win32" ? "junction" : "dir");
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === "EPERM") return;
+      throw error;
+    }
+    await connectProject(project, { destination: workspace, autoDetectGithub: false });
+    const source = await readFile(join(workspace, "sources/local/project.md"), "utf8");
+    expect(source).toContain("Real selected project");
+    expect(source).not.toContain("PRIVATE-EVIDENCE");
+    expect(source).not.toContain("leaked.md");
+    expect(source).toContain("[SKIPPED: docs root is a link or not a directory]");
+  });
+
 });

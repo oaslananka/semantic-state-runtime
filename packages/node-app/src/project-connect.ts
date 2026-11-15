@@ -176,9 +176,27 @@ async function selectRootMarkdown(root: string): Promise<string[]> {
 async function selectNestedMarkdown(
   root: string,
   initial: readonly string[],
-): Promise<{ selected: string[]; omitted: boolean }> {
+): Promise<{ selected: string[]; omitted: boolean; skippedLinkedRoot: boolean }> {
   const selected = [...initial];
   let omitted = false;
+
+  // The root docs folder itself can be a symlink/junction to outside the
+  // project. Checking only its children does not prevent that data leak.
+  const docsRoot = join(root, "docs");
+  try {
+    const docsInfo = await lstat(docsRoot);
+    if (docsInfo.isSymbolicLink() || !docsInfo.isDirectory()) {
+      return { selected, omitted: false, skippedLinkedRoot: true };
+    }
+    const canonical = await realpath(docsRoot);
+    const fromProject = relative(root, canonical);
+    if (fromProject.startsWith("..") || isAbsolute(fromProject)) {
+      return { selected, omitted: false, skippedLinkedRoot: true };
+    }
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") return { selected, omitted, skippedLinkedRoot: false };
+    throw error;
+  }
 
   async function scan(folder: string, prefix: string, depth: number): Promise<void> {
     if (depth > 2) return;
@@ -205,7 +223,7 @@ async function selectNestedMarkdown(
     }), Promise.resolve());
   }
   await scan(join(root, "docs"), "docs/", 0);
-  return { selected, omitted };
+  return { selected, omitted, skippedLinkedRoot: false };
 }
 
 async function markdownExcerpt(root: string, relativePath: string): Promise<string> {
@@ -226,7 +244,7 @@ async function markdownExcerpt(root: string, relativePath: string): Promise<stri
 
 async function collectLocalDocuments(root: string): Promise<string> {
   const topLevel = await selectRootMarkdown(root);
-  const { selected, omitted } = await selectNestedMarkdown(root, topLevel);
+  const { selected, omitted, skippedLinkedRoot } = await selectNestedMarkdown(root, topLevel);
   if (selected.length === 0) {
     return "No selected README, ROADMAP, CHANGELOG, TODO or docs Markdown found.";
   }
@@ -235,7 +253,8 @@ async function collectLocalDocuments(root: string): Promise<string> {
   const aggregate = sections.join("\n\n---\n\n");
   return aggregate.slice(0, 11_000)
     + (aggregate.length > 11_000 ? "\n[DOCUMENT INVENTORY TRUNCATED]" : "")
-    + (omitted ? "\n[SKIPPED: 20 DOCUMENT LIMIT; other docs may exist]" : "");
+    + (omitted ? "\n[SKIPPED: 20 DOCUMENT LIMIT; other docs may exist]" : "")
+    + (skippedLinkedRoot ? "\n[SKIPPED: docs root is a link or not a directory]" : "");
 }
 
 async function githubGet(path:string,fetchImpl:typeof fetch):Promise<unknown> {
