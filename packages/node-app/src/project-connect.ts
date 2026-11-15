@@ -189,10 +189,11 @@ async function selectNestedMarkdown(
       if ((error as NodeJS.ErrnoException).code === "ENOENT") return;
       throw error;
     }
-    for (const entry of entries.toSorted((a, b) => a.name.localeCompare(b.name, "en"))) {
-      if (entry.name.startsWith(".") || entry.isSymbolicLink()) continue;
+    // A serial Promise chain keeps source order deterministic while bounding I/O.
+    const ordered = entries.toSorted((a, b) => a.name.localeCompare(b.name, "en"));
+    await ordered.reduce((previous, entry) => previous.then(async () => {
+      if (entry.name.startsWith(".") || entry.isSymbolicLink()) return;
       if (entry.isDirectory()) {
-        // Scan sequentially: a large repository must not spawn unbounded I/O.
         await scan(join(folder, entry.name), prefix + entry.name + "/", depth + 1);
       } else if (entry.isFile() && entry.name.toLowerCase().endsWith(".md")) {
         selected.push(prefix + entry.name);
@@ -201,7 +202,7 @@ async function selectNestedMarkdown(
         selected.pop();
         omitted = true;
       }
-    }
+    }), Promise.resolve());
   }
   await scan(join(root, "docs"), "docs/", 0);
   return { selected, omitted };
@@ -280,9 +281,9 @@ function validItems(raw:unknown,repository:string):GitHubItem[] {
       ? /^https:\/\/github\.com\/([^/]+\/[^/]+)\/(issues|pull)\/(\d+)$/.exec(item.html_url)
       : null;
     if(typeof item.number!=="number"||!Number.isSafeInteger(item.number)||item.number<1||
-      typeof item.title!=="string"||!source||
-      source[1]!.toLowerCase()!==repository.toLowerCase()||
-      Number(source[3])!==item.number){
+      typeof item.title!=="string"||
+      source?.[1]?.toLowerCase()!==repository.toLowerCase()||
+      Number(source?.[3])!==item.number){
       throw new Error("GitHub item has invalid identity.");
     }
     return item as GitHubItem;
