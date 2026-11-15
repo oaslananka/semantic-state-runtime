@@ -165,6 +165,7 @@ try {
   runNode([connector, selectedProject, "--local-only", "--out", connectedWorkspace], { cwd: releaseConsumer });
   runNode([connector, "--refresh", connectedWorkspace], { cwd: releaseConsumer });
   const connectedConfig = JSON.parse(await readFile(join(connectedWorkspace, "ssrl.config.json"), "utf8"));
+  assert.equal(connectedConfig.entities[0].aliases.includes("Sample project"), true);
   const antigravity = JSON.parse(await readFile(join(connectedWorkspace, ".agents/mcp_config.json"), "utf8"));
   const copilotConnected = JSON.parse(await readFile(join(connectedWorkspace, "copilot.mcp-config.json"), "utf8"));
   assert.deepEqual(antigravity.mcpServers.ssrl, copilotConnected.mcpServers.ssrl);

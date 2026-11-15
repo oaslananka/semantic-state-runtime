@@ -65,6 +65,60 @@ describe("one-command project connection", () => {
     await expect(connectProject("https://github.com/acme/sample-project", {destination:workspace,fetchImpl})).rejects.toThrow(/exists|overwrite/i);
   });
 
+  it("finds a local-only project by its README name, not just its folder", async () => {
+    const {project,workspace}=await fixture();
+    await mkdir(project);
+    await writeFile(join(project,"README.md"),"# Project Moonrise\nFinal handoff deadline: 2026-12-12.\nPriority issue 77.\n");
+    await connectProject(project,{destination:workspace,autoDetectGithub:false});
+    const settings=JSON.parse(await readFile(join(workspace,"ssrl.config.json"),"utf8"));
+    expect(settings.entities[0].aliases).toContain("sample-project");
+    expect(settings.entities[0].aliases).toContain("Project Moonrise");
+    expect(await readFile(join(workspace,"START-HERE.md"),"utf8")).toContain("Project Moonrise");
+    expect(settings.policy.operations.apply).toBe(false);
+    const {config}=await loadLocalAppConfig(join(workspace,"ssrl.config.json"));
+    const app=await createLocalRuntimeApp(config,{
+      sourceRefresh:()=>refreshProject(join(workspace,"project.json")),
+    });
+    const server=app.createMcpServer();
+    const client=new Client({name:"readme-title-acceptance",version:"1.0.0"});
+    const [clientWire,serverWire]=InMemoryTransport.createLinkedPair();
+    await server.connect(serverWire);
+    await client.connect(clientWire);
+    try {
+      const result=await client.callTool({name:"context.compile",arguments:{
+        task:"Project Moonrise handoff deadline and priority issue",
+        budgetTokens:1000,
+      }});
+      expect(result.isError).not.toBe(true);
+      expect(JSON.stringify(result.structuredContent)).toContain("2026-12-12");
+      expect(JSON.stringify(result.structuredContent)).toContain("77");
+    } finally {
+      await client.close();
+      await server.close();
+      app.close();
+    }
+  });
+
+  it("recognizes a centered HTML README title without source writes", async () => {
+    const {project,workspace}=await fixture();
+    await mkdir(project);
+    await writeFile(join(project,"README.md"),'<h1 align="center">Project Moonrise</h1>\nRead-only docs.\n');
+    await connectProject(project,{destination:workspace,autoDetectGithub:false});
+    const settings=JSON.parse(await readFile(join(workspace,"ssrl.config.json"),"utf8"));
+    expect(settings.entities[0].aliases).toContain("Project Moonrise");
+  });
+  it("does not derive a project name from a symlinked README outside the selected folder", async () => {
+    const {project,workspace,root}=await fixture();
+    await mkdir(project);
+    const external=join(root,"external-private.md");
+    await writeFile(external,"# PRIVATE_PROJECT_ALIAS\n");
+    try { await symlink(external,join(project,"README.md")); }
+    catch(error) { if((error as NodeJS.ErrnoException).code==="EPERM")return; throw error; }
+    await connectProject(project,{destination:workspace,autoDetectGithub:false});
+    const settings=JSON.parse(await readFile(join(workspace,"ssrl.config.json"),"utf8"));
+    expect(settings.entities[0].aliases).not.toContain("PRIVATE_PROJECT_ALIAS");
+    expect(settings.entities[0].aliases).toContain("sample-project");
+  });
   it("rediscovers newly created Markdown while remote issue metadata changes",async()=>{
     const {project, workspace}=await fixture();
     await mkdir(join(project,"docs"),{recursive:true});

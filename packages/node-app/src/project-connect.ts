@@ -102,7 +102,16 @@ const githubFields=[
   {canonical:"Project.openPulls",external:"open_pulls"},
   {canonical:"Project.githubDescription",external:"description"},
 ];
-function projectConfig(settings:ProjectSettings,label:string) {
+async function localReadmeTitle(root: string | undefined): Promise<string | undefined> {
+  if (!root || !(await selectRootMarkdown(root)).includes("README.md")) return undefined;
+  // Reuse the existing bounded, no-symlink document reader.
+  const excerpt = await markdownExcerpt(root, "README.md");
+  const heading = /^#\s+(.{1,120})\s*$/m.exec(excerpt)?.[1]
+    ?? /<h1\b[^>]*>([^<>]{1,120})<\/h1>/i.exec(excerpt)?.[1];
+  const title = heading ? scrub(heading) : "";
+  return title.length >= 2 && title.length <= 120 ? title : undefined;
+}
+function projectConfig(settings:ProjectSettings,label:string,readmeTitle?:string) {
   const local=!!settings.localRoot,github=!!settings.githubRepo;
   const localFields=[
     {canonical:"Project.repository",external:"name"},
@@ -114,7 +123,7 @@ function projectConfig(settings:ProjectSettings,label:string) {
     ...(github?[{id:"github",root:"./sources/github",manifest:manifest("github",githubFields)}]:[]),
   ];
   const entityId="entity://project/"+settings.projectId;
-  const aliases=[...new Set([label,settings.githubRepo,settings.githubRepo?.split("/").at(-1)]
+  const aliases=[...new Set([label,settings.githubRepo,settings.githubRepo?.split("/").at(-1),readmeTitle]
     .filter((v):v is string=>typeof v==="string"&&v.length>0))];
   const authority=[
     ...(local?[{property:"Project.documents",provider:"local"}]:[]),
@@ -476,9 +485,10 @@ export async function connectProject(input:string,options:ConnectOptions):Promis
     const meta=join(workspace,"project.json");
     await writeFile(meta,JSON.stringify(settings,null,2)+"\n",{mode:0o600});
     await refreshProject(meta,{...(options.fetchImpl===undefined?{}:{fetchImpl:options.fetchImpl}),force:true});
+    const readmeTitle=await localReadmeTitle(sources.localRoot);
     const name=sources.githubRepo??basename(sources.localRoot!);
     await writeFile(join(workspace,"ssrl.config.json"),
-      JSON.stringify(projectConfig(settings,name),null,2)+"\n",{mode:0o600});
+      JSON.stringify(projectConfig(settings,name,readmeTitle),null,2)+"\n",{mode:0o600});
     const command=[process.execPath,fileURLToPath(new URL("./cli.js",import.meta.url)),"--project",meta];
     await writeFile(join(workspace,"opencode.json"),JSON.stringify({
       $schema:"https://opencode.ai/config.json",
@@ -499,7 +509,7 @@ export async function connectProject(input:string,options:ConnectOptions):Promis
     },null,2)+"\n",{mode:0o600});
     await writeFile(join(workspace,"START-HERE.md"),
       "# Your SSRL project\n\nYour connected GitHub/local project is read-only. No source repo files are modified.\n\n"+
-      "Open this workspace in OpenCode or Antigravity; opencode.json and .agents/mcp_config.json are ready. Ask your AI to call SSRL context.compile for the latest open issues and project docs of "+name+".\n\n"+
+      "Open this workspace in OpenCode or Antigravity; opencode.json and .agents/mcp_config.json are ready. Ask your AI to call SSRL context.compile for the latest open issues and project docs of "+(readmeTitle??name)+".\n\n"+
       "For VS Code Copilot merge the ssrl entry from copilot.mcp-config.json into your existing global MCP config. Do not overwrite other servers.\n\n"+
       "GitHub issues are refreshed on demand: within five minutes anonymously or one minute with an existing GitHub token. Use ssrl-connect --refresh <workspace> for an immediate check. No background daemon or paid API. "+
       "Selected local files: README, ROADMAP, CHANGELOG, TODO, plus up to 20 docs/**/*.md files. Each file is capped at 64 KiB. "+
