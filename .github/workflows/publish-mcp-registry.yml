@@ -26,7 +26,7 @@ jobs:
     env:
       MCP_PUBLISHER_VERSION: v1.8.1
     steps:
-      - name: Checkout exact npm source
+      - name: Checkout trusted workflow repository
         uses: actions/checkout@v7
         with:
           ref: ${{ github.sha }}
@@ -38,6 +38,17 @@ jobs:
           REQUESTED_VERSION: ${{ inputs.version }}
         run: |
           set -euo pipefail
+          RELEASE_VERSION="$REQUESTED_VERSION"
+          if [[ ! "$RELEASE_VERSION" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]; then
+            echo "::error::Only a previously published stable SemVer is eligible"
+            exit 1
+          fi
+          tag="v$RELEASE_VERSION"
+          # The workflow file is trusted from main. The MCP Registry metadata and
+          # npm identity must come from the immutable GitHub Release tag, even when
+          # the maintenance workflow itself changed after the npm release.
+          git fetch --no-tags origin "refs/tags/$tag:refs/tags/$tag"
+          git switch --detach "$tag"
           node --input-type=module <<'NODE'
           import { readFileSync, appendFileSync } from 'node:fs';
           const root = JSON.parse(readFileSync('package.json', 'utf8'));
@@ -55,8 +66,6 @@ jobs:
           }
           appendFileSync(process.env.GITHUB_ENV, 'RELEASE_VERSION=' + version + '\n');
           NODE
-          tag="v$RELEASE_VERSION"
-          git fetch --no-tags origin "refs/tags/$tag:refs/tags/$tag"
           test "$(git rev-list -n 1 "$tag")" = "$(git rev-parse HEAD)" || {
             echo "::error::Release tag does not identify the checked out source"; exit 1;
           }
@@ -107,6 +116,7 @@ jobs:
           for n in 1 2 3 4 5 6; do
             payload="$(curl --proto "=https" --proto-redir "=https" --tlsv1.2 --fail --silent --show-error --get \
               --data-urlencode 'search=io.github.oaslananka/semantic-state-runtime' \
+              --data-urlencode "version=$RELEASE_VERSION" \
               'https://registry.modelcontextprotocol.io/v0.1/servers')"
             if jq -e --arg v "$RELEASE_VERSION" \
               '.servers[]? | select(.server.name == "io.github.oaslananka/semantic-state-runtime" and .server.version == $v)' \

@@ -9,7 +9,7 @@
 
 **Durable, authoritative context for AI agents — accessible through MCP.**
 
-> **Status: v0.1.0 — initial public npm release.** The MCP runtime is usable
+> **Status: v0.2.0 — public npm MCP release.** The MCP runtime is usable
 > with synthetic data, but independent human onboarding and production use are
 > not yet validated. No hosted service or model account is included.
 
