@@ -1,0 +1,21 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "bootstrap-sha": "21468f184510430d73168e275417ad279de11594",
+  "packages": {
+    ".": {
+      "release-type": "node",
+      "package-name": "semantic-state-runtime",
+      "component": "semantic-state-runtime",
+      "include-component-in-tag": false,
+      "include-v-in-tag": true,
+      "release-as": "0.1.0",
+      "extra-files": [
+        {
+          "type": "json",
+          "path": "packages/node-app/package.json",
+          "jsonpath": "$.version"
+        }
+      ]
+    }
+  }
+}

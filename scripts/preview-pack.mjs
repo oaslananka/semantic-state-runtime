@@ -2,6 +2,7 @@ import { chmod, copyFile, mkdir, readFile, readdir, rm, writeFile } from "node:f
 import { join, resolve } from "node:path";
 import { build } from "esbuild";
 import { repository, command, pnpm, requireNewDestination } from "./preview-utils.mjs";
+import { npmDistTag } from "./release-version.mjs";
 
 async function collectThirdPartyNotices(metafile) {
   const roots = new Set();
@@ -30,7 +31,7 @@ async function packagePreview(argv) {
   const args = remaining[0] === "--" ? remaining.slice(1) : remaining;
   if (args.length === 1 && ["--help", "-h"].includes(args[0])) {
     console.log("Usage: pnpm preview:pack -- <new-directory>");
-    console.log(publishable ? "Stage an unpublished public prerelease candidate." : "Build a private, locally packable npm preview; nothing is published.");
+    console.log(publishable ? "Stage a public npm release candidate without publishing." : "Build a private, locally packable npm preview; nothing is published.");
     return;
   }
   if (args.length !== 1 || !args[0] || args[0].startsWith("-")) {
@@ -46,10 +47,12 @@ async function packagePreview(argv) {
   if (workspace.private !== true || nodeApp.private !== true || workspace.license !== "MIT") {
     throw new Error("Public packaging preflight requires private workspaces and the MIT license.");
   }
-
-  if (publishable && !/^0\.\d+\.\d+-(?:alpha|beta|rc)\.\d+$/.test(nodeApp.version)) {
-    throw new Error("Public prerelease candidate requires an explicit 0.x prerelease version.");
+  if (workspace.version !== nodeApp.version) {
+    throw new Error("Root release version must match the bundled MCP source version.");
   }
+
+  // Reject ambiguous versions before any package output is staged.
+  const releaseTag = npmDistTag(nodeApp.version);
 
   pnpm(["build"]);
   await mkdir(destination);
@@ -89,7 +92,7 @@ async function packagePreview(argv) {
       engines: { node: ">=24.12.0" },
       bin: { "ssrl-node": "dist/cli.js", "ssrl-demo-init": "bin/demo-init.mjs" },
       ...(publishable ? { publishConfig: {
-        tag: "next", registry: "https://registry.npmjs.org/", access: "public",
+        tag: releaseTag, registry: "https://registry.npmjs.org/", access: "public",
       } } : {}),
       files: ["dist/", "bin/", "LICENSE", "THIRD_PARTY_NOTICES.txt", "README.md", "docs/"],
     };
@@ -102,8 +105,8 @@ async function packagePreview(argv) {
     );
     await writeFile(join(destination, "README.md"), "# Semantic State Runtime — Developer Preview\n\n**Not production-ready.** This first distribution is validated with synthetic data, not personal data. No hosted account or model key is required for the local MCP server.\n\n## First run (read-only synthetic data)\n\nAfter installing the package, run `ssrl-demo-init ./ssrl-example` to create a new synthetic workspace. It refuses existing directories. Configure your MCP client to launch `ssrl-node ./ssrl-example/ssrl.config.json`. Call `context.compile` with task `Project Atlas deadline`; the authorized fixture deadline is 2026-11-20.\n\nFor your own files, follow [the explicit local configuration guide](docs/local-node-runtime-v1.md). Start read-only; do not grant write scopes without reviewing source and field permissions.\n\n[Source code](https://github.com/oaslananka/semantic-state-runtime) | [MIT License](LICENSE) | [Third-party notices](THIRD_PARTY_NOTICES.txt)\n");
     command(process.execPath, [join(destination, "dist/cli.js"), "--help"], destination);
-    console.log((publishable ? "Unpublished public prerelease candidate ready: " : "Private npm preview ready: ") + destination);
-    console.log(publishable ? "Use npm publish --tag next only after verified release gates and npm authentication." : "Run npm pack from this directory; do not publish this preview.");
+    console.log((publishable ? "Unpublished public npm release candidate ready: " : "Private npm preview ready: ") + destination);
+    console.log(publishable ? "Publish only from the matching GitHub Release via trusted GitHub Actions OIDC." : "Run npm pack from this directory; do not publish this preview.");
   } catch (error) {
     await rm(destination, { recursive: true, force: true });
     throw error;

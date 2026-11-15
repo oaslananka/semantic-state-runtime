@@ -1,10 +1,14 @@
-name: Publish npm Developer Preview
+name: Publish npm Release
 
 on:
   workflow_dispatch:
     inputs:
       version:
-        description: Exact new npm prerelease version (published under next)
+        description: Exact version from the GitHub Release
+        required: true
+        type: string
+      tag:
+        description: Exact GitHub Release tag (v<version>)
         required: true
         type: string
 
@@ -22,7 +26,7 @@ jobs:
     timeout-minutes: 15
     permissions:
       contents: read
-      "id-token": write # GitHub OIDC permission, not a credential
+      "id-token": write # OIDC authentication, not a long-lived credential
     steps:
       - name: Checkout source
         uses: actions/checkout@v7
@@ -45,30 +49,43 @@ jobs:
       - name: Use pinned npm CLI for trusted publishing
         run: npm install --global --ignore-scripts npm@12.2.2
 
+      - name: Verify exact GitHub Release and source commit
+        env:
+          EXPECTED_VERSION: ${{ inputs.version }}
+          EXPECTED_TAG: ${{ inputs.tag }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import { appendFileSync, readFileSync } from 'node:fs';
+          import { npmDistTag } from './scripts/release-version.mjs';
+          const version = process.env.EXPECTED_VERSION;
+          if (process.env.EXPECTED_TAG !== 'v' + version) {
+            throw new Error('GitHub Release tag must exactly match npm version');
+          }
+          const pkg = JSON.parse(readFileSync('packages/node-app/package.json', 'utf8'));
+          const root = JSON.parse(readFileSync('package.json', 'utf8'));
+          if (pkg.version !== version || root.version !== version ||
+              pkg.private !== true || root.private !== true) {
+            throw new Error('GitHub Release differs from private root or MCP source version');
+          }
+          appendFileSync(process.env.GITHUB_ENV, 'NPM_DIST_TAG=' + npmDistTag(version) + '\n');
+          NODE
+          git fetch --no-tags origin "refs/tags/$EXPECTED_TAG:refs/tags/$EXPECTED_TAG"
+          test "$(git rev-list -n 1 "$EXPECTED_TAG")" = "$GITHUB_SHA"
+          gh release view "$EXPECTED_TAG" --repo "$GITHUB_REPOSITORY" --json tagName,isDraft \
+            --jq 'select(.isDraft == false) | .tagName' | grep -Fx "$EXPECTED_TAG"
+
       - name: Install locked build dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Verify prerelease intent
-        env:
-          EXPECTED_VERSION: ${{ inputs.version }}
-        run: |
-          node --input-type=module <<'NODE'
-          import { readFileSync } from 'node:fs';
-          const pkg = JSON.parse(readFileSync('packages/node-app/package.json', 'utf8'));
-          const expected = process.env.EXPECTED_VERSION;
-          if (!/^0\.\d+\.\d+-(alpha|beta|rc)\.\d+$/.test(expected ?? '') ||
-              expected !== pkg.version || pkg.private !== true) {
-            throw new Error('Select an explicit prerelease matching packages/node-app/package.json');
-          }
-          NODE
-
-      - name: Test standalone npm package and read-only MCP
+      - name: Test package and read-only MCP
         run: pnpm test:preview-pack
 
-      - name: Build standalone npm prerelease
+      - name: Stage release from exact source
         run: pnpm release:pack -- "$RUNNER_TEMP/ssrl-npm-publish"
 
-      - name: Verify package and unclaimed version
+      - name: Verify manifest, unclaimed version and dry-run
         env:
           EXPECTED_VERSION: ${{ inputs.version }}
         working-directory: ${{ runner.temp }}/ssrl-npm-publish
@@ -80,20 +97,20 @@ jobs:
           if (pkg.name !== 'semantic-state-runtime' ||
               pkg.version !== process.env.EXPECTED_VERSION ||
               pkg.private !== false ||
-              pkg.publishConfig?.tag !== 'next' ||
+              pkg.publishConfig?.tag !== process.env.NPM_DIST_TAG ||
               pkg.publishConfig?.access !== 'public') {
-            throw new Error('Publish manifest does not match intended public next release');
+            throw new Error('Public npm manifest differs from GitHub Release');
           }
           const found = spawnSync('npm', ['view', 'semantic-state-runtime', 'versions', '--json',
             '--registry=https://registry.npmjs.org/'], { encoding: 'utf8' });
           if (found.status !== 0) throw new Error('Cannot verify existing npm versions');
           const versions = JSON.parse(found.stdout);
           if ([versions].flat().includes(pkg.version)) {
-            throw new Error('This version is already published; immutable npm versions cannot be overwritten');
+            throw new Error('Refusing to overwrite an immutable npm version');
           }
           NODE
-          npm publish --dry-run --tag next --access public
+          npm publish --dry-run --tag "$NPM_DIST_TAG" --access public
 
       - name: Publish using npm Trusted Publisher OIDC
         working-directory: ${{ runner.temp }}/ssrl-npm-publish
-        run: npm publish --tag next --access public
+        run: npm publish --tag "$NPM_DIST_TAG" --access public

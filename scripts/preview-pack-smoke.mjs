@@ -5,6 +5,7 @@ import { mkdir, mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { npmDistTag } from "./release-version.mjs";
 
 const repository = fileURLToPath(new URL("../", import.meta.url));
 const packager = join(repository, "scripts/preview-pack.mjs");
@@ -55,6 +56,9 @@ function packMetadata(cwd, destination, name) {
 }
 
 try {
+  assert.equal(npmDistTag("0.1.0-beta.2"), "next");
+  assert.equal(npmDistTag("0.1.0"), "latest");
+  assert.throws(() => npmDistTag("0.1.0-dev"), /Expected a stable SemVer/);
   runNode([packager, stage]);
   const manifest = JSON.parse(await readFile(join(stage, "package.json"), "utf8"));
   assert.equal(manifest.private, true, "Preview must not be publishable");
@@ -92,11 +96,11 @@ try {
   assert.equal(releaseManifest.version, manifest.version);
   assert.equal(releaseManifest.name, "semantic-state-runtime");
   assert.equal(releaseManifest.license, "MIT");
-  assert.equal(releaseManifest.publishConfig.tag, "next");
+  assert.equal(releaseManifest.publishConfig.tag, npmDistTag(releaseManifest.version));
   assert.match(releaseManifest.repository.url, /github\.com\/oaslananka\/semantic-state-runtime/);
   assert.deepEqual(releaseManifest.dependencies ?? {}, {});
   assert.match(await readFile(join(releaseStage, "THIRD_PARTY_NOTICES.txt"), "utf8"), /LICENSES/);
-  npm(["publish", "--dry-run", "--tag", "next", "--access", "public", "--json"], releaseStage, true);
+  npm(["publish", "--dry-run", "--tag", npmDistTag(releaseManifest.version), "--access", "public", "--json"], releaseStage, true);
   const releasePacked = packMetadata(releaseStage, root, releaseManifest.name);
   const paths = releasePacked.files.map((f) => f.path);
   assert.ok(paths.includes("THIRD_PARTY_NOTICES.txt"));
@@ -116,7 +120,7 @@ try {
     env: { SSRL_TEST_CLI_PATH: entry, SSRL_TEST_CONFIG_PATH: join(example, "ssrl.config.json") },
   });
   runNode([demoInit, "--help"], { cwd: releaseConsumer });
-  console.log("Unpublished npm next-tag candidate and read-only installed MCP first-run PASS");
+  console.log("Unpublished npm " + npmDistTag(releaseManifest.version) + "-tag candidate and read-only installed MCP first-run PASS");
   console.log("Offline npm tarball installation and installed MCP tool calls passed");
 } finally {
   await rm(root, { recursive: true, force: true });

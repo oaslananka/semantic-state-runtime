@@ -103,35 +103,46 @@ After installing `semantic-state-runtime@next`, run `ssrl-demo-init ./ssrl-examp
 
 The initial npm registry publication was verified under npm account `oaslananka`; the real package was downloaded and tested from the registry on Windows and Linux. **Provenance/attestation is not asserted for the manual first `0.1.0-beta.1` release**; the later OIDC beta.2 has signed provenance, but a stable consumer release has not been validated.
 
-## Subsequent npm releases with GitHub Actions OIDC
+## Versioned releases: Release Please and npm OIDC
 
-The single release workflow is `.github/workflows/publish.yml`, with
-**manual dispatch from `main`**. In the npm package's Trusted Publisher
-settings, select **GitHub Actions** with owner `oaslananka`, repository
-`semantic-state-runtime`, workflow filename **`publish.yml`** (filename only),
-and **no environment name**. Enable both **Allow npm publish** and
-**Allow npm dist-tag**. The connection cannot be edited after creation;
-a replacement requires deleting the old connection. See the
-[official npm Trusted Publisher documentation](https://docs.npmjs.com/trusted-publishers/).
+GitHub Releases and npm versions are coupled by the repository's
+[Release Please](https://github.com/googleapis/release-please-action) manifest,
+which tracks **all repository changes** through the private root release version
+and updates the single bundled MCP product version at `packages/node-app`.
+The root pnpm workspace and all internal packages remain private.
 
-This workflow uses GitHub-hosted Ubuntu, `id-token: write`, npm 12.2.2,
-no npm token, and a strict `main` branch / repository identity guard.
-Enter a **new**, unclaimed prerelease version in the workflow's required `version` field
-that exactly matches `packages/node-app/package.json` after the usual
-PR checks and merge. The workflow rebuilds, runs offline MCP packaging
-acceptance, performs npm publish dry-run, then publishes under `next`.
-Never use it to overwrite an existing immutable version. Trusted OIDC
-publishing from this public repository should attach npm provenance;
-verify it for each new version rather than assuming it exists.
+1. Changes use Conventional Commits (`feat:`, `fix:`, etc.).
+2. A Release Please GitHub Actions run on `main` prepares the release PR,
+   updates the private node-app version, and generates its changelog.
+3. Once the release PR has passed required CI and is merged, Release Please
+   creates the matching GitHub Release/tag (for example `v0.1.0`).
+4. The same GitHub Actions workflow dispatches **`publish.yml`** with the
+   exact GitHub Release version and tag. The existing npm Trusted Publisher
+   recognizes only `publish.yml` and uses GitHub OIDC (no npm write token).
+5. The publisher checks the tag, exact source SHA, source and bundled npm
+   manifest versions, existing registry versions, npm pack and synthetic
+   read-only MCP tests, then publishes **stable SemVer under `latest`**
+   and explicitly numbered prereleases under `next`.
 
-**First-release tag limitation:** npm set `latest` to `0.1.0-beta.1`
-during the inaugural release, while the verified OIDC release points `next`
-to `0.1.0-beta.2`. npm rejected the attempted `latest` deletion with
-HTTP 400 (`Dist-tag request rejected`). The workflow does not offer that
-unsuccessful operation. **Always install `semantic-state-runtime@next`**
-for the latest Developer Preview; unqualified installs currently resolve
-to the older beta.1. Do not move `latest` to an unverified stable version.
+The npm trusted publisher must be configured for GitHub owner `oaslananka`,
+repository `semantic-state-runtime`, workflow filename **`publish.yml`**,
+no environment name, with **npm publish** enabled. Do not change this
+filename or add a long-lived npm token. The package is published with signed
+provenance from this public repository when OIDC authentication succeeds.
 
-**Do not configure an npm token in GitHub secrets** for this workflow.
-Trusted Publisher OIDC is tied to the exact GitHub workflow filename.
-Changes to the workflow name in npm require a replacement trust connection.
+The inaugural manual beta release previously set `latest` to
+`0.1.0-beta.1`; npm rejected a later deletion of that tag with HTTP 400.
+Until GitHub `v0.1.0` and npm `0.1.0` are both confirmed, use
+`npm install -g semantic-state-runtime@next` for the verified beta.2.
+After the first stable SemVer release is confirmed, the unqualified npm
+install should resolve to it; explicit `@next` remains for prereleases.
+
+**Release policy:** a non-prerelease SemVer alone does not establish
+independent human onboarding, production support or personal-data safety.
+Verify the public registry tarball, version, signed provenance and the
+synthetic MCP `context.compile` path for each release.
+
+**GitHub workflow note:** Release Please defaults to `GITHUB_TOKEN`. GitHub
+may require explicit handling for CI on Release Please-created PRs and
+events generated with that token. Do not merge a release PR without the
+required checks actually passing on its exact head.
