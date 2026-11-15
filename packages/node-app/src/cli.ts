@@ -1,10 +1,10 @@
 #!/usr/bin/env node
-import { readFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { refreshProject } from "./project-connect.js";
 import { serveStdio } from "@modelcontextprotocol/server/stdio";
 import {
   InvalidLocalAppConfigError,
+  NODE_APP_VERSION,
   loadAndCreateLocalRuntimeApp,
 } from "./index.js";
 
@@ -37,10 +37,7 @@ async function main(argv: readonly string[]): Promise<void> {
   }
 
   if (argv.length === 1 && (argv[0] === "--version" || argv[0] === "-V")) {
-    const metadata = JSON.parse(await readFile(new URL("../package.json", import.meta.url), "utf8")) as {
-      version: string;
-    };
-    console.log("ssrl-node " + metadata.version);
+    console.log("ssrl-node " + NODE_APP_VERSION);
     return;
   }
 

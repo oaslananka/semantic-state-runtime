@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { mkdir, stat } from "node:fs/promises";
 import { dirname } from "node:path";
 import { MarkdownFilesystemConnector } from "@ssrl/connector-markdown-fs";
@@ -27,6 +28,11 @@ import {
 } from "./config.js";
 import { createLocalContextRuntime } from "./local-context.js";
 import { providerEntityMapping } from "./provider-mapping.js";
+
+// Release Please keeps this source manifest and the bundled public npm manifest
+// in sync; esbuild preserves import.meta.url relative to the shipped CLI.
+const packageMetadata = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8")) as { version: string };
+export const NODE_APP_VERSION = packageMetadata.version;
 
 function externalBinding(
   entity: LocalEntityConfig,
@@ -222,7 +228,7 @@ export async function createLocalRuntimeApp(
               artifacts: { gateway: contextRuntime.artifactGateway },
             }),
         name: "ssrl-local",
-        version: "0.1.0",
+        version: NODE_APP_VERSION,
       });
     },
     close() {

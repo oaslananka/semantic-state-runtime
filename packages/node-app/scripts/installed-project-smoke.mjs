@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { readFile, writeFile, mkdir } from "node:fs/promises";
-import { join, resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { Client } from "@modelcontextprotocol/client";
 import { StdioClientTransport } from "@modelcontextprotocol/client/stdio";
 
@@ -10,6 +10,8 @@ const project=process.env.SSRL_TEST_CONNECTED_SOURCE;
 if(!cli||!workspace||!project)throw new Error("Installed project smoke needs CLI, workspace and source.");
 const config=JSON.parse(await readFile(join(workspace,"ssrl.config.json"),"utf8"));
 assert.deepEqual(config.principal.scopes,["state:read","context:read"]);
+const installedPackage = JSON.parse(await readFile(join(dirname(resolve(cli)), "..", "package.json"), "utf8"));
+assert.equal(typeof installedPackage.version, "string");
 assert.deepEqual(config.policy.operations,{plan:false,apply:false});
 assert.ok(config.policy.fields.every(f=>f.write===false));
 
@@ -19,6 +21,8 @@ async function connect(name) {
     command:process.execPath,args:[resolve(cli),"--project",join(workspace,"project.json")],stderr:"pipe",
   });
   await client.connect(transport);
+  assert.equal(client.getServerVersion()?.version, installedPackage.version,
+    "The advertised MCP server version must match the installed npm package.");
   return client;
 }
 async function compile(client) {
