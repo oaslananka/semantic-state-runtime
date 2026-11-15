@@ -651,6 +651,7 @@ export async function createLocalContextRuntime(
   config: LocalAppConfig,
   now: () => string = () => new Date().toISOString(),
   monotonicNow?: () => number,
+  sourceRefresh?: () => Promise<void>,
 ): Promise<LocalContextRuntime | undefined> {
   const context = config.context;
   if (context === undefined) return undefined;
@@ -720,6 +721,7 @@ export async function createLocalContextRuntime(
       },
     })));
     const synchronizeSources = async () => {
+      if (sourceRefresh !== undefined) await sourceRefresh();
       await sourceSync.run();
     };
     const artifactGateway = new FreshLocalArtifactGateway({

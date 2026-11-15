@@ -79,6 +79,18 @@ async function packagePreview(argv) {
       logLevel: "warning",
     });
 
+    // The small connector CLI has no third-party dependencies and must be
+    // packaged as a second executable beside ssrl-node.
+    await build({
+      entryPoints: [join(repository, "packages/node-app/dist/project-cli.js")],
+      outfile: join(destination, "dist/project-cli.js"),
+      platform: "node",
+      format: "esm",
+      target: "node24",
+      bundle: true,
+      legalComments: "linked",
+      logLevel: "warning",
+    });
     await writeFile(join(destination, "THIRD_PARTY_NOTICES.txt"), await collectThirdPartyNotices(bundle.metafile));
     await mkdir(join(destination, "bin"));
     await copyFile(join(repository, "scripts/npm-demo-init.mjs"), join(destination, "bin/demo-init.mjs"));
@@ -97,7 +109,7 @@ async function packagePreview(argv) {
       license: "MIT",
       type: "module",
       engines: { node: ">=24.12.0" },
-      bin: { "ssrl-node": "dist/cli.js", "ssrl-demo-init": "bin/demo-init.mjs" },
+      bin: { "ssrl-node": "dist/cli.js", "ssrl-demo-init": "bin/demo-init.mjs", "ssrl-connect": "dist/project-cli.js" },
       ...(publishable ? { publishConfig: {
         tag: releaseTag, registry: "https://registry.npmjs.org/", access: "public",
       } } : {}),
@@ -110,8 +122,10 @@ async function packagePreview(argv) {
       join(repository, "docs/local-node-runtime-v1.md"),
       join(destination, "docs/local-node-runtime-v1.md"),
     );
-    await writeFile(join(destination, "README.md"), "# Semantic State Runtime\n\n**Initial public npm release.** The read-only synthetic demo has automated MCP and chat-client acceptance. Independent human onboarding and production use of real private data have not yet been verified.\n\n## First run\n\nAfter `npm install -g semantic-state-runtime`, run `ssrl-demo-init ./ssrl-example`.\nThe initializer refuses existing directories and creates:\n- `ssrl.config.json` with read-only synthetic Project Atlas data\n- `opencode.json` ready when you open the generated directory with OpenCode\n- `copilot.mcp-config.json` for merging the `ssrl` entry into your Copilot Global configuration (do not overwrite other servers)\n\nAsk your MCP client to call `context.compile` for `Project Atlas deadline`, expecting `2026-11-20`.\n\nThe MCP server itself needs no hosted account or API key; any chat model credentials belong to your own client. For your own data, read [the explicit configuration guide](docs/local-node-runtime-v1.md) before granting file or write permissions.\n\n[Source code](https://github.com/oaslananka/semantic-state-runtime) | [MIT License](LICENSE) | [Third-party notices](THIRD_PARTY_NOTICES.txt)\n");
+    await copyFile(join(repository,"docs/connect-project.md"),join(destination,"docs/connect-project.md"));
+    await writeFile(join(destination, "README.md"), "# Semantic State Runtime\n\n**Public npm MCP release.** Connect a real project once and let multiple AI coding agents request up-to-date, policy-authorized context. Independent human onboarding and private-data production readiness have not been verified.\n\n## Connect your first public GitHub project\n\n```bash\nnpm install -g semantic-state-runtime\nssrl-connect https://github.com/oaslananka/semantic-state-runtime\ncd ssrl-semantic-state-runtime\nopencode\n```\n\nAsk OpenCode: **Use SSRL context.compile for oaslananka/semantic-state-runtime. Which GitHub issues are open? Include issue numbers and source links.**\n\nThe command creates a new, read-only workspace with ready-to-use opencode.json, Antigravity .agents/mcp_config.json and copilot.mcp-config.json. Existing repository files and global client settings are untouched. GitHub metadata and selected Markdown are refreshed on demand; there is no background daemon or paid SSRL service.\n\nFor a local project use `ssrl-connect ./my-project --out ./my-project-ssrl`. For immediate GitHub refresh, use `ssrl-connect --refresh ./ssrl-semantic-state-runtime`. [See detailed instructions, source limits and evidence](docs/connect-project.md).\n\n## Synthetic read-only demo\n\nRun `ssrl-demo-init ./ssrl-example` to create an isolated example with a synthetic Project Atlas deadline of **2026-11-20**. The demo never scans your existing files, does not enable writes, and refuses existing output folders.\n\nThe MCP server itself needs no hosted account or API key; chat models may require a separate provider account. For more complex explicit source permissions see [the local runtime guide](docs/local-node-runtime-v1.md).\n\n[Source code](https://github.com/oaslananka/semantic-state-runtime) | [MIT License](LICENSE) | [Third-party notices](THIRD_PARTY_NOTICES.txt)\n");
 
+    command(process.execPath, [join(destination, "dist/project-cli.js"), "--help"], destination);
     command(process.execPath, [join(destination, "dist/cli.js"), "--help"], destination);
     console.log((publishable ? "Unpublished public npm release candidate ready: " : "Private npm preview ready: ") + destination);
     console.log(publishable ? "Publish only from the matching GitHub Release via trusted GitHub Actions OIDC." : "Run npm pack from this directory; do not publish this preview.");

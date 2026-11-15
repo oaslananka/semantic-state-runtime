@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { mkdir, stat } from "node:fs/promises";
 import { dirname } from "node:path";
 import { MarkdownFilesystemConnector } from "@ssrl/connector-markdown-fs";
@@ -27,6 +28,11 @@ import {
 } from "./config.js";
 import { createLocalContextRuntime } from "./local-context.js";
 import { providerEntityMapping } from "./provider-mapping.js";
+
+// Release Please keeps this source manifest and the bundled public npm manifest
+// in sync; esbuild preserves import.meta.url relative to the shipped CLI.
+const packageMetadata = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8")) as { version: string };
+export const NODE_APP_VERSION = packageMetadata.version;
 
 function externalBinding(
   entity: LocalEntityConfig,
@@ -155,6 +161,7 @@ export interface LocalRuntimeApp {
 
 export async function createLocalRuntimeApp(
   config: LocalAppConfig,
+  options: { readonly sourceRefresh?: () => Promise<void> } = {},
 ): Promise<LocalRuntimeApp> {
   await assertProviderRoots(config);
 
@@ -187,7 +194,7 @@ export async function createLocalRuntimeApp(
   const journal = new SQLiteEventJournal({ path: config.journalPath });
   let contextRuntime: Awaited<ReturnType<typeof createLocalContextRuntime>>;
   try {
-    contextRuntime = await createLocalContextRuntime(config);
+    contextRuntime = await createLocalContextRuntime(config, undefined, undefined, options.sourceRefresh);
   } catch (cause) {
     journal.close();
     throw cause;
@@ -221,7 +228,7 @@ export async function createLocalRuntimeApp(
               artifacts: { gateway: contextRuntime.artifactGateway },
             }),
         name: "ssrl-local",
-        version: "0.1.0",
+        version: NODE_APP_VERSION,
       });
     },
     close() {
@@ -235,12 +242,13 @@ export async function createLocalRuntimeApp(
 
 export async function loadAndCreateLocalRuntimeApp(
   configPath: string,
+  options: { readonly sourceRefresh?: () => Promise<void> } = {},
 ): Promise<{
   readonly app: LocalRuntimeApp;
   readonly warnings: readonly string[];
 }> {
   const loaded = await loadLocalAppConfig(configPath);
-  const app = await createLocalRuntimeApp(loaded.config);
+  const app = await createLocalRuntimeApp(loaded.config, options);
   return {
     app,
     warnings: loaded.warnings,

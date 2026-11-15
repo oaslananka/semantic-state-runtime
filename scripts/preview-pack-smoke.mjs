@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { existsSync } from "node:fs";
-import { mkdir, mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, isAbsolute, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -79,7 +79,7 @@ try {
   assert.equal(installedManifest.license, "MIT");
   assert.equal(installedManifest.version, manifest.version);
   assert.match(await readFile(join(installed, "LICENSE"), "utf8"), /^MIT License/);
-  assert.match(await readFile(join(installed, "README.md"), "utf8"), /Initial public npm release/);
+  assert.match(await readFile(join(installed, "README.md"), "utf8"), /Public npm MCP release/);
   const cli = join(installed, "dist/cli.js");
   runNode([cli, "--help"], { cwd: consumer });
   runNode([cli, "--version"], { cwd: consumer });
@@ -116,6 +116,8 @@ try {
   const paths = releasePacked.files.map((f) => f.path);
   assert.ok(paths.includes("THIRD_PARTY_NOTICES.txt"));
   assert.ok(paths.includes("bin/demo-init.mjs"));
+  assert.ok(paths.includes("docs/connect-project.md"));
+  assert.ok(paths.includes("dist/project-cli.js"), "Project connector must ship in npm tarball");
   assert.ok(!paths.some((path) => /\.npmrc|\.env|\.git|node_modules|\.sqlite/.test(path)));
   await mkdir(releaseConsumer);
   npm(["install", "--offline", "--ignore-scripts", "--no-audit", "--no-fund", "--prefix", releaseConsumer, join(root, releasePacked.filename)], releaseConsumer);
@@ -151,6 +153,34 @@ try {
     env: { SSRL_TEST_CLI_PATH: entry, SSRL_TEST_CONFIG_PATH: join(example, "ssrl.config.json") },
   });
   runNode([demoInit, "--help"], { cwd: releaseConsumer });
+  const connector = join(releaseInstalled, "dist/project-cli.js");
+  runNode([connector, "--help"], { cwd: releaseConsumer });
+  const selectedProject = join(root, "selected-project");
+  const connectedWorkspace = join(root, "connected-workspace");
+  await mkdir(selectedProject);
+  await writeFile(join(selectedProject, "README.md"), "# Sample project\nINITIAL_PROJECT_DECISION\n");
+  // A person starting inside the project must get a sibling workspace without an --out flag.
+  runNode([connector, ".", "--local-only"], { cwd: selectedProject });
+  assert.equal(existsSync(join(root, "ssrl-selected-project", "ssrl.config.json")), true);
+  runNode([connector, selectedProject, "--local-only", "--out", connectedWorkspace], { cwd: releaseConsumer });
+  runNode([connector, "--refresh", connectedWorkspace], { cwd: releaseConsumer });
+  const connectedConfig = JSON.parse(await readFile(join(connectedWorkspace, "ssrl.config.json"), "utf8"));
+  const antigravity = JSON.parse(await readFile(join(connectedWorkspace, ".agents/mcp_config.json"), "utf8"));
+  const copilotConnected = JSON.parse(await readFile(join(connectedWorkspace, "copilot.mcp-config.json"), "utf8"));
+  assert.deepEqual(antigravity.mcpServers.ssrl, copilotConnected.mcpServers.ssrl);
+  assert.equal(connectedConfig.principal.scopes.includes("state:write"), false);
+  assert.equal(connectedConfig.policy.operations.apply, false);
+  assert.equal(connectedConfig.providers.length, 1);
+  runNode([join(repository, "packages/node-app/scripts/installed-project-smoke.mjs")], {
+    cwd: releaseConsumer,
+    env: {
+      SSRL_TEST_CLI_PATH: entry,
+      SSRL_TEST_CONNECTED_WORKSPACE: connectedWorkspace,
+      SSRL_TEST_CONNECTED_SOURCE: selectedProject,
+    },
+  });
+  assert.equal((await readFile(join(selectedProject, "README.md"), "utf8")).includes("UPDATED_PROJECT_DECISION"), true);
+
   console.log("Unpublished npm " + npmDistTag(releaseManifest.version) + "-tag candidate and read-only installed MCP first-run PASS");
   console.log("Offline npm tarball installation and installed MCP tool calls passed");
 } finally {
