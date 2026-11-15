@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.3](https://github.com/oaslananka/semantic-state-runtime/compare/v0.3.2...v0.3.3) (2026-11-15)
+
+
+### Bug Fixes
+
+* align connected project context budget with gateway limit ([#156](https://github.com/oaslananka/semantic-state-runtime/issues/156)) ([bf40eb9](https://github.com/oaslananka/semantic-state-runtime/commit/bf40eb99cdeee409d36c4085ee4ece9acc70cb90))
+
 ## [0.3.2](https://github.com/oaslananka/semantic-state-runtime/compare/v0.3.1...v0.3.2) (2026-11-15)
 
 
