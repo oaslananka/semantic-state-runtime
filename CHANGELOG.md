@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0](https://github.com/oaslananka/semantic-state-runtime/compare/v0.2.0...v0.3.0) (2026-11-15)
+
+
+### Features
+
+* connect real projects with read-only live context ([#145](https://github.com/oaslananka/semantic-state-runtime/issues/145)) ([#146](https://github.com/oaslananka/semantic-state-runtime/issues/146)) ([aa32a7f](https://github.com/oaslananka/semantic-state-runtime/commit/aa32a7f84061c6b0a99abffb034eeb6d5dcd99f9))
+
 ## [0.2.0](https://github.com/oaslananka/semantic-state-runtime/compare/v0.1.0...v0.2.0) (2026-11-15)
 
 
