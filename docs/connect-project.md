@@ -44,6 +44,10 @@ Every command refuses an existing output directory. The local workspace must be 
 
 Original local documents and GitHub issues/PRs are never changed by SSRL. The generated local historical issue-ID snapshot is intentionally retained. If GitHub issues change later, it can be compared with the current, GitHub-authoritative Project.openIssueIds: this is a real, traceable source difference, not a made-up project deadline. The actual displayed data is always policy-scoped through the existing SSRL Context Plane.
 
+## When public GitHub access is rate-limited
+
+Public GitHub API requests have a shared per-IP anonymous rate limit. If `ssrl-connect` reports HTTP 403/429, check its message for a rate-limit reset time, then retry; GitHub may also deny access for other reasons. If you already have an authorized GitHub token, expose it **only in your own shell** through `GH_TOKEN` or `GITHUB_TOKEN` and rerun; never paste credentials into SSRL project files or chat. For a local folder, `--local-only` connects selected Markdown without GitHub requests. SSRL does **not** silently present earlier issue/PR metadata as current when a required refresh fails.
+
 ## How to verify the product benefit
 
 1. Connect a real public repository with an open GitHub issue.
