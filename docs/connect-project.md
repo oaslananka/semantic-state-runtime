@@ -48,7 +48,7 @@ Original local documents and GitHub issues/PRs are never changed by SSRL. The ge
 
 ## When public GitHub access is rate-limited
 
-Public GitHub API requests have a shared per-IP anonymous rate limit. If `ssrl-connect` reports HTTP 403/429, check its message for a rate-limit reset time, then retry; GitHub may also deny access for other reasons. If you already have an authorized GitHub token, expose it **only in your own shell** through `GH_TOKEN` or `GITHUB_TOKEN` and rerun; never paste credentials into SSRL project files or chat. For a local folder, `--local-only` connects selected Markdown without GitHub requests. SSRL does **not** silently present earlier issue/PR metadata as current when a required refresh fails.
+Public GitHub API requests have a shared per-IP anonymous rate limit. When anonymous requests are rate-limited and GitHub CLI (gh) is already installed and authenticated, SSRL reads only the selected repository through that existing CLI login. SSRL never extracts, prints or saves CLI credentials and never uses CLI write operations. An unrelated access-denied HTTP 403 does not trigger this fallback. If `ssrl-connect` reports HTTP 403/429, check its message for a rate-limit reset time, then retry; GitHub may also deny access for other reasons. If you already have an authorized GitHub token, expose it **only in your own shell** through `GH_TOKEN` or `GITHUB_TOKEN` and rerun; never paste credentials into SSRL project files or chat. For a local folder, `--local-only` connects selected Markdown without GitHub requests. SSRL does **not** silently present earlier issue/PR metadata as current when a required refresh fails.
 
 ## How to verify the product benefit
 
