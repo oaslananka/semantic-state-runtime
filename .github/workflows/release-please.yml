@@ -30,12 +30,12 @@ jobs:
           manifest-file: .release-please-manifest.json
 
       - name: Dispatch npm for the new GitHub Release
-        if: ${{ steps.release.outputs['packages/node-app--release_created'] == 'true' }}
+        if: ${{ steps.release.outputs.release_created == 'true' }}
         env:
           GH_TOKEN: ${{ github.token }}
-          VERSION: ${{ steps.release.outputs['packages/node-app--version'] }}
-          TAG: ${{ steps.release.outputs['packages/node-app--tag_name'] }}
-          RELEASE_SHA: ${{ steps.release.outputs['packages/node-app--sha'] }}
+          VERSION: ${{ steps.release.outputs.version }}
+          TAG: ${{ steps.release.outputs.tag_name }}
+          RELEASE_SHA: ${{ steps.release.outputs.sha }}
         run: |
           set -euo pipefail
           test "$TAG" = "v$VERSION"

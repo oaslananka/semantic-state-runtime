@@ -107,8 +107,9 @@ The initial npm registry publication was verified under npm account `oaslananka`
 
 GitHub Releases and npm versions are coupled by the repository's
 [Release Please](https://github.com/googleapis/release-please-action) manifest,
-which tracks the single packaged MCP runtime at `packages/node-app`.
-The root pnpm workspace and its other internal packages remain private.
+which tracks **all repository changes** through the private root release version
+and updates the single bundled MCP product version at `packages/node-app`.
+The root pnpm workspace and all internal packages remain private.
 
 1. Changes use Conventional Commits (`feat:`, `fix:`, etc.).
 2. A Release Please GitHub Actions run on `main` prepares the release PR,

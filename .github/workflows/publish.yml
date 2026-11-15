@@ -64,8 +64,10 @@ jobs:
             throw new Error('GitHub Release tag must exactly match npm version');
           }
           const pkg = JSON.parse(readFileSync('packages/node-app/package.json', 'utf8'));
-          if (pkg.version !== version || pkg.private !== true) {
-            throw new Error('GitHub Release differs from private package source');
+          const root = JSON.parse(readFileSync('package.json', 'utf8'));
+          if (pkg.version !== version || root.version !== version ||
+              pkg.private !== true || root.private !== true) {
+            throw new Error('GitHub Release differs from private root or MCP source version');
           }
           appendFileSync(process.env.GITHUB_ENV, 'NPM_DIST_TAG=' + npmDistTag(version) + '\n');
           NODE

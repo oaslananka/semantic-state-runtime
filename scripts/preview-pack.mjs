@@ -47,6 +47,9 @@ async function packagePreview(argv) {
   if (workspace.private !== true || nodeApp.private !== true || workspace.license !== "MIT") {
     throw new Error("Public packaging preflight requires private workspaces and the MIT license.");
   }
+  if (workspace.version !== nodeApp.version) {
+    throw new Error("Root release version must match the bundled MCP source version.");
+  }
 
   // Reject ambiguous versions before any package output is staged.
   const releaseTag = npmDistTag(nodeApp.version);
