@@ -1,9 +1,6 @@
 name: Publish to MCP Registry
 
 on:
-  workflow_run:
-    workflows: ["Publish npm Release"]
-    types: [completed]
   workflow_dispatch:
     inputs:
       version:
@@ -20,14 +17,7 @@ concurrency:
 
 jobs:
   publish:
-    if: >-
-      github.repository == 'oaslananka/semantic-state-runtime' &&
-      ((github.event_name == 'workflow_run' &&
-        github.event.workflow_run.conclusion == 'success' &&
-        github.event.workflow_run.head_branch == 'main' &&
-        github.event.workflow_run.head_repository.full_name == 'oaslananka/semantic-state-runtime' &&
-        github.event.workflow_run.event == 'workflow_dispatch') ||
-       (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'))
+    if: github.repository == 'oaslananka/semantic-state-runtime' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 12
     permissions:
@@ -39,7 +29,7 @@ jobs:
       - name: Checkout exact npm source
         uses: actions/checkout@v7
         with:
-          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+          ref: ${{ github.sha }}
           persist-credentials: false
 
       - name: Verify GitHub Release, npm identity and exact version
@@ -95,8 +85,8 @@ jobs:
           set -euo pipefail
           archive=mcp-publisher_linux_amd64.tar.gz
           url="https://github.com/modelcontextprotocol/registry/releases/download/${MCP_PUBLISHER_VERSION}"
-          curl --fail --location --silent --show-error --output "$archive" "$url/$archive"
-          curl --fail --location --silent --show-error --output "$archive.sigstore.json" "$url/$archive.sigstore.json"
+          curl --proto "=https" --proto-redir "=https" --tlsv1.2 --fail --location --silent --show-error --output "$archive" "$url/$archive"
+          curl --proto "=https" --proto-redir "=https" --tlsv1.2 --fail --location --silent --show-error --output "$archive.sigstore.json" "$url/$archive.sigstore.json"
           cosign verify-blob --bundle "$archive.sigstore.json" \
             --certificate-identity "https://github.com/modelcontextprotocol/registry/.github/workflows/release.yml@refs/tags/${MCP_PUBLISHER_VERSION}" \
             --certificate-oidc-issuer "https://token.actions.githubusercontent.com" "$archive"
@@ -115,7 +105,7 @@ jobs:
         run: |
           set -euo pipefail
           for n in 1 2 3 4 5 6; do
-            payload="$(curl --fail --silent --show-error --get \
+            payload="$(curl --proto "=https" --proto-redir "=https" --tlsv1.2 --fail --silent --show-error --get \
               --data-urlencode 'search=io.github.oaslananka/semantic-state-runtime' \
               'https://registry.modelcontextprotocol.io/v0.1/servers')"
             if jq -e --arg v "$RELEASE_VERSION" \
