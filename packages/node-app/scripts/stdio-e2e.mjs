@@ -106,7 +106,8 @@ async function runCliHelpCheck() {
   for (const flag of ["--version", "-V"]) {
     const result = await runCliArgs([flag]);
     assert.equal(result.code, 0);
-    assert.match(result.stdout, /^ssrl-node 0\.1\.0-beta\.1\r?\n$/);
+    const packageManifest = JSON.parse(await readFile(new URL("../package.json", import.meta.url), "utf8"));
+    assert.equal(result.stdout.trim(), "ssrl-node " + packageManifest.version);
     assert.equal(result.stderr, "");
   }
 

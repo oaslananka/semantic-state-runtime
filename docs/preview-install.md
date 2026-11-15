@@ -1,6 +1,6 @@
 # Install the Semantic State Runtime Developer Preview
 
-**Status:** `semantic-state-runtime@0.1.0-beta.1` is publicly available on npm under the `next` tag. It is **not** a stable consumer release, an MCP Registry listing, or a hosted service.
+**Status:** `semantic-state-runtime@next` is publicly available on npm as a Developer Preview. It is **not** a stable consumer release, an MCP Registry listing, or a hosted service.
 
 ## Install from npm (recommended first run)
 
@@ -85,7 +85,7 @@ The released package name and cross-platform synthetic installation were verifie
 
 ## Public npm prerelease packaging (maintainers)
 
-The source repository remains **private as an npm workspace**. To reproduce the package build **locally** from its source for `semantic-state-runtime@0.1.0-beta.1`:
+The source repository remains **private as an npm workspace**. To reproduce a candidate release **locally** from the current source manifest:
 
 ~~~bash
 pnpm install --frozen-lockfile

@@ -81,7 +81,7 @@ try {
   runNode([packager, "--publishable", releaseStage]);
   const releaseManifest = JSON.parse(await readFile(join(releaseStage, "package.json"), "utf8"));
   assert.equal(releaseManifest.private, false);
-  assert.equal(releaseManifest.version, "0.1.0-beta.1");
+  assert.equal(releaseManifest.version, manifest.version);
   assert.equal(releaseManifest.name, "semantic-state-runtime");
   assert.equal(releaseManifest.license, "MIT");
   assert.equal(releaseManifest.publishConfig.tag, "next");
