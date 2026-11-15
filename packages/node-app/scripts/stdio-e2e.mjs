@@ -8,6 +8,7 @@ import { fileURLToPath } from "node:url";
 import { Client } from "@modelcontextprotocol/client";
 import { StdioClientTransport } from "@modelcontextprotocol/client/stdio";
 
+const nodeAppVersion = JSON.parse(await readFile(new URL("../package.json", import.meta.url), "utf8")).version;
 const entityId = "entity://project/atlas";
 const root = await mkdtemp(join(tmpdir(), "ssrl-stdio-e2e-"));
 const primary = join(root, "primary");
@@ -106,7 +107,7 @@ async function runCliHelpCheck() {
   for (const flag of ["--version", "-V"]) {
     const result = await runCliArgs([flag]);
     assert.equal(result.code, 0);
-    assert.match(result.stdout, /^ssrl-node 0\.1\.0-beta\.1\r?\n$/);
+    assert.equal(result.stdout.trim(), "ssrl-node " + nodeAppVersion);
     assert.equal(result.stderr, "");
   }
 

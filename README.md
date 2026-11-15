@@ -5,7 +5,7 @@
 **Durable, authoritative context for AI agents — accessible through MCP.**
 
 > **Status: Developer Preview.** This is a working engineering runtime and MCP
-> server with a public [npm Developer Preview](https://www.npmjs.com/package/semantic-state-runtime) (`0.1.0-beta.1`, `next` tag), **not** a supported consumer app, stable release, or hosted service.
+> server with a public [npm Developer Preview](https://www.npmjs.com/package/semantic-state-runtime) (`next` dist-tag), **not** a supported consumer app, stable release, or hosted service.
 
 Semantic State Runtime (SSRL) helps AI agents use the **right information**
 when several sources disagree. It reconciles writable state against explicit
@@ -129,7 +129,7 @@ See [OpenCode and Goose examples](examples/README.md) and the separate
 
 ## Project status
 
-- **Ready to try:** published npm `0.1.0-beta.1` Developer Preview (`next`),
+- **Ready to try:** published npm Developer Preview (`next`),
   read-only synthetic first-run, local build, deterministic demo, stdio MCP
   integration and regression tests.
 - **Not yet delivered:** independently validated human onboarding,
