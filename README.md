@@ -5,7 +5,7 @@
 **Durable, authoritative context for AI agents — accessible through MCP.**
 
 > **Status: Developer Preview.** This is a working engineering runtime and MCP
-> server, not a released consumer app, hosted service, or npm package.
+> server, not a released consumer app or hosted service. Its first npm Developer Preview is being prepared, not yet published.
 
 Semantic State Runtime (SSRL) helps AI agents use the **right information**
 when several sources disagree. It reconciles writable state against explicit
@@ -52,7 +52,7 @@ It builds a production-only installation at a **new, explicit final path**.
 On Windows, do not move that installed folder afterward; this is **not**
 yet an npm/npx package or a cross-platform portable archive.
 
-A **local, unpublished npm tarball** can also be built with `pnpm preview:pack -- <new-staging-directory>`; `pnpm test:preview-pack` verifies offline npm installation and real MCP tool calls. See [preview packaging](docs/preview-install.md#local-npm-tarball-preview-unpublished). Nothing is published to npm or MCP Registry.
+A **local, unpublished npm tarball** can also be built with `pnpm preview:pack -- <new-staging-directory>`; `pnpm test:preview-pack` verifies offline npm installation and real MCP tool calls. See [preview packaging](docs/preview-install.md#local-npm-tarball-preview-unpublished). A public prerelease candidate can be staged using `pnpm release:pack -- <new-directory>` and verified with the existing offline installation checks. **No npm or MCP Registry release is published yet.**
 
 The runnable local stdio server is built from source. After creating
 an explicit configuration file using the

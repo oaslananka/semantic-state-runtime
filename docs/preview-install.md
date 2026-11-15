@@ -68,3 +68,23 @@ The generated directory contains a bundled stdio CLI, MIT license, and the local
 The source repository's `pnpm test:preview-pack` runs `npm pack`, installs the resulting tarball **offline into a different directory**, and checks `--help`, `--version`, and real policy-scoped MCP stdio tool calls. This test must pass on the exact PR head before any public distribution is considered.
 
 The package still needs independent human first-run, distribution-name verification, Windows/Linux installation evidence and a separate release approval. No public npm or MCP Registry entry has been created.
+
+## First public npm prerelease candidate (not yet published)
+
+The source repository remains **private as an npm workspace**. To stage an explicitly publishable **local candidate** for `semantic-state-runtime@0.1.0-beta.1`:
+
+~~~bash
+pnpm install --frozen-lockfile
+pnpm release:pack -- ../ssrl-release-candidate
+cd ../ssrl-release-candidate
+npm pack
+npm publish --dry-run --tag next --access public
+~~~
+
+This does not publish a registry package. The candidate is intentionally tagged `next`, not `latest`; the normal `preview:pack` output stays `private: true`. Both include the MIT notice and audited bundled third-party license notices.
+
+### First user experience
+
+After an eventual `npm install semantic-state-runtime@next`, run `ssrl-demo-init ./ssrl-example` to create a **new**, synthetic, read-only directory; this refuses overwrites and never scans existing user files. Connect an MCP stdio client with `ssrl-node ./ssrl-example/ssrl.config.json` and ask it to call `context.compile` with task `Project Atlas deadline`. The response should contain the authorized sample date `2026-11-20` without private data. For personal projects, review the detailed configuration guide before mapping any real files or enabling writes.
+
+**Publication is separately blocked until a verified npm session or registered GitHub Actions trusted publisher is available, the package identity is owned, release content/CI are green, and actual registry installation can be checked.** npm package availability and security are not proven by a local dry run.
