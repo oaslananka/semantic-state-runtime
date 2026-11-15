@@ -1,11 +1,11 @@
 # Semantic State Runtime
 
-[![CI](https://github.com/oaslananka/semantic-state-runtime/actions/workflows/ci.yml/badge.svg)](https://github.com/oaslananka/semantic-state-runtime/actions/workflows/ci.yml) [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [![GitGem](https://gitgem.org/api/badge/github/oaslananka/semantic-state-runtime.svg)](https://gitgem.org/github/oaslananka/semantic-state-runtime)
+[![CI](https://github.com/oaslananka/semantic-state-runtime/actions/workflows/ci.yml/badge.svg)](https://github.com/oaslananka/semantic-state-runtime/actions/workflows/ci.yml) [![npm next](https://img.shields.io/npm/v/semantic-state-runtime/next.svg?label=npm%20next)](https://www.npmjs.com/package/semantic-state-runtime) [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [![GitGem](https://gitgem.org/api/badge/github/oaslananka/semantic-state-runtime.svg)](https://gitgem.org/github/oaslananka/semantic-state-runtime)
 
 **Durable, authoritative context for AI agents — accessible through MCP.**
 
 > **Status: Developer Preview.** This is a working engineering runtime and MCP
-> server, not a released consumer app or hosted service. Its first npm Developer Preview is being prepared, not yet published.
+> server with a public [npm Developer Preview](https://www.npmjs.com/package/semantic-state-runtime) (`0.1.0-beta.1`, `next` tag), **not** a supported consumer app, stable release, or hosted service.
 
 Semantic State Runtime (SSRL) helps AI agents use the **right information**
 when several sources disagree. It reconciles writable state against explicit
@@ -25,6 +25,33 @@ assistant guess, SSRL can:
 
 This is **state reconciliation and access-controlled context**, not simply
 chat-history memory, an unrestricted file search, or an LLM provider.
+
+## Try the npm Developer Preview
+
+Requirements: **Node.js 24.12+** and npm. No Git clone, workspace build,
+API key, or model account is needed to try the **synthetic read-only** MCP server.
+
+~~~bash
+npm install -g semantic-state-runtime@next
+ssrl-demo-init ./ssrl-example
+ssrl-node --version
+~~~
+
+The initializer creates a **new** folder and refuses to overwrite one.
+It provides a generated configuration at `./ssrl-example/ssrl.config.json`
+that reads synthetic Markdown only, with **no write permissions**.
+Point your MCP-capable chat client's **stdio server command** at `ssrl-node`
+and pass the **absolute path** to that config file as its argument.
+Then call `context.compile` for `Project Atlas deadline`; the authorized
+synthetic result contains **2026-11-20**. Your client may require a
+separate model account, but the MCP server itself does not.
+
+Use the explicit [configuration guide](docs/local-node-runtime-v1.md)
+before authorizing access to real files. Windows and Linux registry installs
+plus MCP tool calls passed with synthetic data; independent human onboarding
+and production suitability remain **unverified**.
+
+See [installation and client setup](docs/preview-install.md).
 
 ## Run the demo
 
@@ -46,15 +73,17 @@ the network; **the demo itself requires no API key or external model**.
 
 ## Use it as an MCP server
 
-Want the compiled runtime installed outside the source checkout?
-See [the source-based Developer Preview installer](docs/preview-install.md).
-It builds a production-only installation at a **new, explicit final path**.
-On Windows, do not move that installed folder afterward; this is **not**
-yet an npm/npx package or a cross-platform portable archive.
+For a source-built alternative, see [the source-based Developer Preview installer](docs/preview-install.md).
+It builds a production-only installation at an explicit final path; the
+source-based Windows installation cannot safely be moved afterward. The
+**published npm package is standalone**, separate from that limitation.
 
-A **local, unpublished npm tarball** can also be built with `pnpm preview:pack -- <new-staging-directory>`; `pnpm test:preview-pack` verifies offline npm installation and real MCP tool calls. See [preview packaging](docs/preview-install.md#local-npm-tarball-preview-unpublished). A public prerelease candidate can be staged using `pnpm release:pack -- <new-directory>` and verified with the existing offline installation checks. **No npm or MCP Registry release is published yet.**
+Maintainers can still build a **private local npm tarball** using
+`pnpm preview:pack -- <new-staging-directory>` and verify it with
+`pnpm test:preview-pack`. The public prerelease is available on npm;
+**the MCP Registry listing and a stable consumer release are not available**.
 
-The runnable local stdio server is built from source. After creating
+When running a local source build instead, after creating
 an explicit configuration file using the
 [local runtime guide](docs/local-node-runtime-v1.md), start the server with:
 
@@ -100,10 +129,11 @@ See [OpenCode and Goose examples](examples/README.md) and the separate
 
 ## Project status
 
-- **Ready to try:** local build, deterministic demo, stdio MCP integration,
-  synthetic client onboarding and regression tests.
-- **Not yet delivered:** independently validated real-user onboarding,
-  public npm/MCP Registry distribution, or a supported consumer release.
+- **Ready to try:** published npm `0.1.0-beta.1` Developer Preview (`next`),
+  read-only synthetic first-run, local build, deterministic demo, stdio MCP
+  integration and regression tests.
+- **Not yet delivered:** independently validated human onboarding,
+  MCP Registry distribution, or a supported stable consumer release.
 - **License:** [MIT](LICENSE), copyright (c) 2026 Osman Aslan. Reuse and
   distribution are permitted under the license's notice requirements.
 - **Participation:** read [Contributing](CONTRIBUTING.md) and
