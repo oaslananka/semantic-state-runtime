@@ -45,6 +45,15 @@ function npm(args, cwd, capture = false) {
   return result.stdout;
 }
 
+function packMetadata(cwd, destination, name) {
+  const output = JSON.parse(npm(["pack", "--json", "--pack-destination", destination], cwd, true));
+  // npm 11 returns an array; npm 12 returns an object keyed by package name.
+  const metadata = Array.isArray(output) ? output[0] : output?.[name];
+  assert.ok(metadata && typeof metadata.filename === "string", "npm pack metadata must identify a tarball");
+  assert.ok(Array.isArray(metadata.files), "npm pack must list packaged files");
+  return metadata;
+}
+
 try {
   runNode([packager, stage]);
   const manifest = JSON.parse(await readFile(join(stage, "package.json"), "utf8"));
@@ -55,9 +64,8 @@ try {
   assert.deepEqual(manifest.optionalDependencies ?? {}, {});
   assert.equal(Object.values(manifest).some((value) => typeof value === "string" && value.includes("file:///")), false);
 
-  const packed = JSON.parse(npm(["pack", "--json", "--pack-destination", root], stage, true));
-  assert.equal(packed.length, 1);
-  const tarball = join(root, packed[0].filename);
+  const packed = packMetadata(stage, root, manifest.name);
+  const tarball = join(root, packed.filename);
   await mkdir(consumer);
 
   npm(["install", "--offline", "--ignore-scripts", "--no-audit", "--no-fund", "--prefix", consumer, tarball], consumer);
@@ -89,14 +97,13 @@ try {
   assert.deepEqual(releaseManifest.dependencies ?? {}, {});
   assert.match(await readFile(join(releaseStage, "THIRD_PARTY_NOTICES.txt"), "utf8"), /LICENSES/);
   npm(["publish", "--dry-run", "--tag", "next", "--access", "public", "--json"], releaseStage, true);
-  const releasePacked = JSON.parse(npm(["pack", "--json", "--pack-destination", root], releaseStage, true));
-  assert.equal(releasePacked.length, 1);
-  const paths = releasePacked[0].files.map((f) => f.path);
+  const releasePacked = packMetadata(releaseStage, root, releaseManifest.name);
+  const paths = releasePacked.files.map((f) => f.path);
   assert.ok(paths.includes("THIRD_PARTY_NOTICES.txt"));
   assert.ok(paths.includes("bin/demo-init.mjs"));
   assert.ok(!paths.some((path) => /\.npmrc|\.env|\.git|node_modules|\.sqlite/.test(path)));
   await mkdir(releaseConsumer);
-  npm(["install", "--offline", "--ignore-scripts", "--no-audit", "--no-fund", "--prefix", releaseConsumer, join(root, releasePacked[0].filename)], releaseConsumer);
+  npm(["install", "--offline", "--ignore-scripts", "--no-audit", "--no-fund", "--prefix", releaseConsumer, join(root, releasePacked.filename)], releaseConsumer);
   const releaseInstalled = join(releaseConsumer, "node_modules/semantic-state-runtime");
   const entry = join(releaseInstalled, "dist/cli.js");
   const demoInit = join(releaseInstalled, "bin/demo-init.mjs");
