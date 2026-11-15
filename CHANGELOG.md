@@ -3,6 +3,10 @@
 ## [0.3.2](https://github.com/oaslananka/semantic-state-runtime/compare/v0.3.1...v0.3.2) (2026-11-15)
 
 
+### Onboarding
+
+* Public GitHub connections can recover from anonymous API quota exhaustion through an already-authenticated local GitHub CLI. SSRL does not extract, log or save CLI tokens, and unrelated access-denied requests still fail closed.
+
 ### Bug Fixes
 
 * use existing GitHub CLI when anonymous API quota is exhausted ([#153](https://github.com/oaslananka/semantic-state-runtime/issues/153)) ([8883c6e](https://github.com/oaslananka/semantic-state-runtime/commit/8883c6e952abe82b2d49ca262ca40070ff2daf21))
@@ -13,6 +17,10 @@
 ### Licensing
 
 * Project-authored source is now distributed under GPL-3.0-only. Previously published versions retain their original license terms; see [LICENSING.md](LICENSING.md).
+
+### Onboarding
+
+* Public GitHub connections can recover from anonymous API quota exhaustion through an already-authenticated local GitHub CLI. SSRL does not extract, log or save CLI tokens, and unrelated access-denied requests still fail closed.
 
 ### Bug Fixes
 
