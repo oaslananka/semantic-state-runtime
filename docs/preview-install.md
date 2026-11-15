@@ -1,6 +1,6 @@
 # Install Semantic State Runtime (v0.1.0)
 
-**Status:** `semantic-state-runtime@0.1.0` is the first non-prerelease SemVer version, published on npm as `latest` and tagged as GitHub `v0.1.0` with signed provenance. This is **not** a fully supported consumer product or a hosted service. Official MCP Registry publication is a separately verified process.
+**Status:** `semantic-state-runtime@0.2.0` is the current public stable SemVer package, released as GitHub `v0.2.0` through npm Trusted Publisher OIDC with signed provenance. The initial stable release was `0.1.0`. This is **not** a fully supported consumer product or a hosted service. Official MCP Registry publication is a separately verified process.
 
 ## Install from npm (recommended first run)
 
@@ -137,8 +137,10 @@ provenance from this public repository when OIDC authentication succeeds.
 **Tag history:** The inaugural manual beta release unexpectedly set
 `latest` to `0.1.0-beta.1`; npm rejected an attempted deletion with HTTP 400.
 The verified GitHub `v0.1.0` OIDC release subsequently published npm `0.1.0`
-and set **`latest: 0.1.0`**. Ordinary npm installs now select this version;
-explicit **`@next`** retains the previous beta channel.
+and established the stable `latest` channel. Release Please then published
+GitHub/npm `0.2.0` with matching provenance and the Registry-ready `mcpName`.
+Ordinary npm installs select the current stable `latest` version; explicit
+`@next` remains for the previous prerelease channel.
 
 **Release policy:** a non-prerelease SemVer alone does not establish
 independent human onboarding, production support or personal-data safety.
@@ -154,6 +156,6 @@ required checks actually passing on its exact head.
 
 The source includes `server.json` for `io.github.oaslananka/semantic-state-runtime`; the packager copies the matching `mcpName` into each newly published npm release. Registry ownership verification requires that field in the **actual published npm artifact**, not merely the private workspace manifest. The Registry package arguments require a user-provided `ssrl.config.json` path. Running `ssrl-demo-init` first is the safest read-only setup.
 
-The separate `Publish to MCP Registry` GitHub Actions workflow is explicitly dispatched with the **already-published** version after npm Trusted Publisher success. It verifies the exact GitHub Release/tag, checks npm's immutable published metadata, downloads a signed and pinned official `mcp-publisher` using HTTPS-only redirects, and authenticates via GitHub OIDC. It is intentionally separate from npm publishing: a Registry outage cannot require republishing the same npm version. Publication is complete **only after** the official Registry API reports the same version, not when `server.json` exists in the repository.
+The separate `Publish to MCP Registry` GitHub Actions workflow is explicitly dispatched with the **already-published** version after npm Trusted Publisher success. The trusted workflow runs from `main` but checks out the **immutable GitHub Release tag** for the requested version, so a workflow-only repair does not require republishing npm. It verifies the exact release/tag and npm's immutable published metadata, downloads a signed and pinned official `mcp-publisher` using HTTPS-only redirects, and authenticates via GitHub OIDC. It is intentionally separate from npm publishing: a Registry outage cannot require republishing the same npm version. Publication is complete **only after** the official Registry API reports the same version, not when `server.json` exists in the repository.
 
 The MCP Registry is in preview and its listing can change. Independent human first-use acceptance and real personal-data production safety remain separate gates.
