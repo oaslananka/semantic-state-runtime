@@ -3,6 +3,10 @@
 ## [0.3.3](https://github.com/oaslananka/semantic-state-runtime/compare/v0.3.2...v0.3.3) (2026-11-15)
 
 
+### MCP client compatibility
+
+* Connected projects now accept context requests up to the existing 4,096-token gateway limit, allowing a 2,000-token Codex retry without enabling writes. Requests above that limit remain denied.
+
 ### Bug Fixes
 
 * align connected project context budget with gateway limit ([#156](https://github.com/oaslananka/semantic-state-runtime/issues/156)) ([bf40eb9](https://github.com/oaslananka/semantic-state-runtime/commit/bf40eb99cdeee409d36c4085ee4ece9acc70cb90))
