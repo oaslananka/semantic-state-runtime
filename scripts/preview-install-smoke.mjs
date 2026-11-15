@@ -39,7 +39,10 @@ try {
   assert.match(notice, /^MIT License\n/);
   assert.match(notice, /Copyright \(c\) 2026 Osman Aslan/);
   assert.match(await readFile(join(initial, "docs/local-node-runtime-v1.md"), "utf8"), /Local Node runtime v1/);
-  assert.match(await readFile(join(initial, "docs/preview-install.md"), "utf8"), /Developer Preview/);
+  const installGuide = await readFile(join(initial, "docs/preview-install.md"), "utf8");
+  assert.match(installGuide, /Semantic State Runtime/);
+  assert.match(installGuide, /npm install -g semantic-state-runtime(?:\r?\n)/);
+  assert.match(installGuide, /ssrl-demo-init/);
   const overwrite = run([installer, initial], { expectFailure: true });
   assert.notEqual(overwrite.status, 0);
   assert.match(overwrite.stderr, /Destination already exists; refusing to overwrite/);
