@@ -3,16 +3,9 @@ name: Publish npm Developer Preview
 on:
   workflow_dispatch:
     inputs:
-      operation:
-        description: npm registry operation
-        type: choice
-        required: true
-        options:
-          - publish-next
-          - remove-beta-latest
       version:
-        description: Exact npm prerelease version (for publish-next)
-        required: false
+        description: Exact new npm prerelease version (published under next)
+        required: true
         type: string
 
 permissions:
@@ -49,15 +42,13 @@ jobs:
           registry-url: 'https://registry.npmjs.org/'
           package-manager-cache: false
 
-      - name: Use npm CLI with trusted-publisher dist-tag support
+      - name: Use pinned npm CLI for trusted publishing
         run: npm install --global --ignore-scripts npm@12.2.2
 
       - name: Install locked build dependencies
-        if: inputs.operation == 'publish-next'
         run: pnpm install --frozen-lockfile
 
       - name: Verify prerelease intent
-        if: inputs.operation == 'publish-next'
         env:
           EXPECTED_VERSION: ${{ inputs.version }}
         run: |
@@ -72,15 +63,12 @@ jobs:
           NODE
 
       - name: Test standalone npm package and read-only MCP
-        if: inputs.operation == 'publish-next'
         run: pnpm test:preview-pack
 
       - name: Build standalone npm prerelease
-        if: inputs.operation == 'publish-next'
         run: pnpm release:pack -- "$RUNNER_TEMP/ssrl-npm-publish"
 
       - name: Verify package and unclaimed version
-        if: inputs.operation == 'publish-next'
         env:
           EXPECTED_VERSION: ${{ inputs.version }}
         working-directory: ${{ runner.temp }}/ssrl-npm-publish
@@ -107,31 +95,5 @@ jobs:
           npm publish --dry-run --tag next --access public
 
       - name: Publish using npm Trusted Publisher OIDC
-        if: inputs.operation == 'publish-next'
         working-directory: ${{ runner.temp }}/ssrl-npm-publish
         run: npm publish --tag next --access public
-
-      - name: Remove inadvertent beta latest tag
-        if: inputs.operation == 'remove-beta-latest'
-        run: |
-          node --input-type=module <<'NODE'
-          import { spawnSync } from 'node:child_process';
-          const run = (...args) => spawnSync('npm', args, { encoding: 'utf8' });
-          const tags = run('dist-tag', 'ls', 'semantic-state-runtime',
-            '--registry=https://registry.npmjs.org/');
-          if (tags.status !== 0) throw new Error('Cannot verify npm distribution tags');
-          const parsed = Object.fromEntries(tags.stdout.trim().split(/\r?\n/)
-            .map((line) => line.split(/:\s*/, 2)));
-          const latest = parsed.latest;
-          if (latest === undefined) {
-            console.log('No latest tag to remove');
-            process.exit(0);
-          }
-          if (!/^0\.\d+\.\d+-(alpha|beta|rc)\.\d+$/.test(latest) ||
-              latest !== parsed.next) {
-            throw new Error('Refusing to modify an unexpected or stable latest tag');
-          }
-          const removed = spawnSync('npm', ['dist-tag', 'rm', 'semantic-state-runtime',
-            'latest', '--registry=https://registry.npmjs.org/'], { stdio: 'inherit' });
-          if (removed.status !== 0) process.exitCode = 1;
-          NODE
