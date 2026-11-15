@@ -102,3 +102,34 @@ The commands above **do not publish** another registry package. The released Dev
 After installing `semantic-state-runtime@next`, run `ssrl-demo-init ./ssrl-example` to create a **new**, synthetic, read-only directory; this refuses overwrites and never scans existing user files. Connect an MCP stdio client with `ssrl-node ./ssrl-example/ssrl.config.json` and ask it to call `context.compile` with task `Project Atlas deadline`. The response should contain the authorized sample date `2026-11-20` without private data. For personal projects, review the detailed configuration guide before mapping any real files or enabling writes.
 
 The initial npm registry publication was verified under npm account `oaslananka`; the real package was downloaded and tested from the registry on Windows and Linux. **Provenance/attestation is not asserted for this manual first release**, and a stable consumer release has not been validated.
+
+## Subsequent npm releases with GitHub Actions OIDC
+
+The single release workflow is `.github/workflows/publish.yml`, with
+**manual dispatch from `main`**. In the npm package's Trusted Publisher
+settings, select **GitHub Actions** with owner `oaslananka`, repository
+`semantic-state-runtime`, workflow filename **`publish.yml`** (filename only),
+and **no environment name**. Enable both **Allow npm publish** and
+**Allow npm dist-tag**. The connection cannot be edited after creation;
+a replacement requires deleting the old connection. See the
+[official npm Trusted Publisher documentation](https://docs.npmjs.com/trusted-publishers/).
+
+This workflow uses GitHub-hosted Ubuntu, `id-token: write`, npm 12.2.2,
+no npm token, and a strict `main` branch / repository identity guard.
+Choose `publish-next` only for a **new**, unclaimed prerelease version
+that exactly matches `packages/node-app/package.json` after the usual
+PR checks and merge. The workflow rebuilds, runs offline MCP packaging
+acceptance, performs npm publish dry-run, then publishes under `next`.
+Never use it to overwrite an existing immutable version. Trusted OIDC
+publishing from this public repository should attach npm provenance;
+verify it for each new version rather than assuming it exists.
+
+`remove-beta-latest` is a narrowly scoped one-time repair option for
+npm's first-release default-tag behavior. It removes `latest` only
+when it points to the **same prerelease** as `next`. It does not unpublish
+or delete any package, and it refuses to modify a stable or unexpected
+tag. The npm Trusted Publisher must have `npm dist-tag` permission.
+
+**Do not configure an npm token in GitHub secrets** for this workflow.
+Trusted Publisher OIDC is tied to the exact GitHub workflow filename.
+Changes to the workflow name in npm require a replacement trust connection.

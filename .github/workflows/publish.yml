@@ -1,0 +1,137 @@
+name: Publish npm Developer Preview
+
+on:
+  workflow_dispatch:
+    inputs:
+      operation:
+        description: npm registry operation
+        type: choice
+        required: true
+        options:
+          - publish-next
+          - remove-beta-latest
+      version:
+        description: Exact npm prerelease version (for publish-next)
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: npm-semantic-state-runtime
+  cancel-in-progress: false
+
+jobs:
+  npm:
+    if: github.repository == 'oaslananka/semantic-state-runtime' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 12.14.0
+          run_install: false
+
+      - name: Set up Node and npm registry
+        uses: actions/setup-node@v7
+        with:
+          node-version: '26'
+          registry-url: 'https://registry.npmjs.org/'
+          package-manager-cache: false
+
+      - name: Use npm CLI with trusted-publisher dist-tag support
+        run: npm install --global npm@12.2.2
+
+      - name: Install locked build dependencies
+        if: inputs.operation == 'publish-next'
+        run: pnpm install --frozen-lockfile
+
+      - name: Verify prerelease intent
+        if: inputs.operation == 'publish-next'
+        env:
+          EXPECTED_VERSION: ${{ inputs.version }}
+        run: |
+          node --input-type=module <<'NODE'
+          import { readFileSync } from 'node:fs';
+          const pkg = JSON.parse(readFileSync('packages/node-app/package.json', 'utf8'));
+          const expected = process.env.EXPECTED_VERSION;
+          if (!/^0\.\d+\.\d+-(alpha|beta|rc)\.\d+$/.test(expected ?? '') ||
+              expected !== pkg.version || pkg.private !== true) {
+            throw new Error('Select an explicit prerelease matching packages/node-app/package.json');
+          }
+          NODE
+
+      - name: Test standalone npm package and read-only MCP
+        if: inputs.operation == 'publish-next'
+        run: pnpm test:preview-pack
+
+      - name: Build standalone npm prerelease
+        if: inputs.operation == 'publish-next'
+        run: pnpm release:pack -- "$RUNNER_TEMP/ssrl-npm-publish"
+
+      - name: Verify package and unclaimed version
+        if: inputs.operation == 'publish-next'
+        env:
+          EXPECTED_VERSION: ${{ inputs.version }}
+        working-directory: ${{ runner.temp }}/ssrl-npm-publish
+        run: |
+          node --input-type=module <<'NODE'
+          import { readFileSync } from 'node:fs';
+          import { spawnSync } from 'node:child_process';
+          const pkg = JSON.parse(readFileSync('package.json', 'utf8'));
+          if (pkg.name !== 'semantic-state-runtime' ||
+              pkg.version !== process.env.EXPECTED_VERSION ||
+              pkg.private !== false ||
+              pkg.publishConfig?.tag !== 'next' ||
+              pkg.publishConfig?.access !== 'public') {
+            throw new Error('Publish manifest does not match intended public next release');
+          }
+          const found = spawnSync('npm', ['view', 'semantic-state-runtime', 'versions', '--json',
+            '--registry=https://registry.npmjs.org/'], { encoding: 'utf8' });
+          if (found.status !== 0) throw new Error('Cannot verify existing npm versions');
+          const versions = JSON.parse(found.stdout);
+          if ([versions].flat().includes(pkg.version)) {
+            throw new Error('This version is already published; immutable npm versions cannot be overwritten');
+          }
+          NODE
+          npm publish --dry-run --tag next --access public
+
+      - name: Publish using npm Trusted Publisher OIDC
+        if: inputs.operation == 'publish-next'
+        working-directory: ${{ runner.temp }}/ssrl-npm-publish
+        run: npm publish --tag next --access public
+
+      - name: Remove inadvertent beta latest tag
+        if: inputs.operation == 'remove-beta-latest'
+        run: |
+          node --input-type=module <<'NODE'
+          import { spawnSync } from 'node:child_process';
+          const run = (...args) => spawnSync('npm', args, { encoding: 'utf8' });
+          const tags = run('dist-tag', 'ls', 'semantic-state-runtime',
+            '--registry=https://registry.npmjs.org/');
+          if (tags.status !== 0) throw new Error('Cannot verify npm distribution tags');
+          const parsed = Object.fromEntries(tags.stdout.trim().split(/\r?\n/)
+            .map((line) => line.split(/:\s*/, 2)));
+          const latest = parsed.latest;
+          if (latest === undefined) {
+            console.log('No latest tag to remove');
+            process.exit(0);
+          }
+          if (!/^0\.\d+\.\d+-(alpha|beta|rc)\.\d+$/.test(latest) ||
+              latest !== parsed.next) {
+            throw new Error('Refusing to modify an unexpected or stable latest tag');
+          }
+          const removed = spawnSync('npm', ['dist-tag', 'rm', 'semantic-state-runtime',
+            'latest', '--registry=https://registry.npmjs.org/'], { stdio: 'inherit' });
+          if (removed.status !== 0) process.exitCode = 1;
+          NODE
